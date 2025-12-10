@@ -1,6 +1,6 @@
 # ErisML Library
 
-ErisML is a modeling layer for governed, foundation-model-enabled agents
+ErisML is a modeling language for governed, foundation-model-enabled agents
 operating in pervasive computing environments (homes, hospitals, campuses,
 factories, vehicles, etc.).
 
