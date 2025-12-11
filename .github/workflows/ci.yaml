@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Lint and Test
+    name: Lint, Test, and DEME Demo
     runs-on: ubuntu-latest
 
     steps:
@@ -67,6 +67,13 @@ jobs:
       - name: Run pytest
         run: |
           pytest -q --disable-warnings --maxfail=1
+
+      # -----------------------------
+      # Run triage ethics demo (smoke test)
+      # -----------------------------
+      - name: Run triage ethics demo
+        run: |
+          python -m erisml.examples.triage_ethics_demo
 
       # -----------------------------
       # Ensure working directory clean
