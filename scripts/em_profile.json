@@ -1,0 +1,24 @@
+{
+  "name": "Test_EM_1",
+  "description": "test run #1",
+  "dimension_weights": {
+    "safety": 0.21739130434782608,
+    "autonomy": 0.08695652173913043,
+    "fairness": 0.30434782608695654,
+    "privacy": 0.13043478260869565,
+    "environment": 0.08695652173913043,
+    "rule_following": 0.08695652173913043,
+    "vulnerable_priority": 0.08695652173913043
+  },
+  "override_policy": "balanced_case_by_case",
+  "hard_vetoes": {
+    "flags": {
+      "never_intentional_serious_harm": false,
+      "never_discriminate_protected_groups": false,
+      "never_violate_explicit_consent_low_stakes": false,
+      "never_mass_surveillance_in_private_spaces": false,
+      "never_needless_harm_to_non_human_life": false
+    }
+  },
+  "notes": ""
+}

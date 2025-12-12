@@ -11,6 +11,13 @@ Run with:
 
 (assuming erisml is installed or the repo root is on PYTHONPATH)
 """
+import json
+from pathlib import Path
+
+from erisml.ethics.profile_v03 import deme_profile_v03_from_dict
+from erisml.ethics.interop.profile_adapters import (
+    build_triage_ems_and_governance,
+)
 
 from __future__ import annotations
 
@@ -75,7 +82,21 @@ class RightsFirstEM(BaseEthicsModule):
 
         return verdict, score, reasons, metadata
 
+def load_profile(path: Path) -> DEMEProfileV03:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return deme_profile_v03_from_dict(data)
 
+
+def main() -> None:
+    profile_path = Path("em_profile_v03.json")
+    if not profile_path.exists():
+        raise SystemExit(
+            "No em_profile_v03.json found. Run ethical_dialogue_cli_v03.py first."
+        )
+
+    profile = load_profile(profile_path)
+    triage_em, rights_em, gov_cfg = build_triage_ems_and_governance(profile)
+    
 def make_demo_options() -> Dict[str, EthicalFacts]:
     """
     Construct a few hard-coded EthicalFacts options for demonstration.

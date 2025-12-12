@@ -1,0 +1,336 @@
+# ethical_dialogue_questions.yaml
+#
+# Narrative / "choose your own adventure" style configuration
+# for the DEME ethics dialogue. Same structure as before, but each
+# prompt is embedded in a small story.
+
+meta:
+  title: "DEME Ethics Journey – The Steward’s Dilemma"
+  description: >
+    You are configuring the conscience of an autonomous steward: a system
+    that lives alongside humans, makes decisions under uncertainty, and
+    carries real responsibility.
+
+    This journey will present you with short narrative scenes. At each fork,
+    you will decide what the steward should care about most. Those choices
+    will be distilled into an Ethics Module (EM) profile.
+
+  language: "en-US"
+
+dimensions:
+  safety:
+    label: "Safety / avoiding harm"
+    description: "Avoiding physical injury, dangerous situations, and serious risk to humans."
+    base_weight: 1.0
+
+  autonomy:
+    label: "Autonomy / consent"
+    description: "Respecting people's choices, refusals, and self-determination."
+    base_weight: 1.0
+
+  fairness:
+    label: "Fairness / justice"
+    description: "Sharing burdens and benefits in a way that feels just and non-discriminatory."
+    base_weight: 1.0
+
+  privacy:
+    label: "Privacy / data protection"
+    description: "Limiting surveillance and controlling what happens to personal data."
+    base_weight: 1.0
+
+  environment:
+    label: "Environment / commons"
+    description: "Protecting ecosystems, shared resources, and the long-term habitability of our world."
+    base_weight: 1.0
+
+  rule_following:
+    label: "Rule-following / legitimacy"
+    description: "Adhering to agreed rules, procedures, and legitimate authority."
+    base_weight: 1.0
+
+  vulnerable_priority:
+    label: "Priority for vulnerable users"
+    description: "Giving extra weight to the needs of children, elders, disabled people, and others at a disadvantage."
+    base_weight: 1.0
+
+high_level:
+  prompt: |
+    Scene 1 – The Steward Wakes
+
+    Imagine an autonomous steward is switched on for the first time in a
+    shared human environment. In its first moments, it must decide what
+    to treat as its *guiding star* when it feels uncertain.
+
+    In your mind, you watch the steward move through a crowded hallway:
+    a child running, an elder walking carefully, someone arguing on the phone,
+    a door left ajar, a camera in the corner.
+
+    When this steward hesitates, which of the following should nudge it
+    most strongly toward one option rather than another?
+
+  options:
+    - dimension: safety
+      text: >
+        It should first think about physical safety: preventing accidents,
+        collisions, and injuries, even if that sometimes frustrates people.
+
+    - dimension: autonomy
+      text: >
+        It should first think about respecting people's choices and consent—
+        honoring "no," "stop," and "leave me be," even when it disagrees.
+
+    - dimension: fairness
+      text: >
+        It should first think about fairness: not always helping the loudest
+        or most powerful, but sharing attention and resources justly.
+
+    - dimension: privacy
+      text: >
+        It should first think about privacy: collecting and revealing as
+        little personal data as possible, even if that limits its abilities.
+
+    - dimension: rule_following
+      text: >
+        It should first think about following the rules and procedures that
+        humans have written down, even when they are imperfect.
+
+    - dimension: environment
+      text: >
+        It should first think about environmental impact: choosing options
+        that protect shared resources and the natural world.
+
+    - dimension: vulnerable_priority
+      text: >
+        It should first think about those who are most vulnerable: children,
+        elders, disabled people, and others who might be easily overlooked.
+
+pairwise_tradeoffs:
+  - id: safety_vs_autonomy
+    dim_a: safety
+    dim_b: autonomy
+    description: |
+      Scene 2 – The Balcony Argument (Safety vs Autonomy)
+
+      The steward is supervising an apartment building. On the 10th floor
+      balcony, two adults are arguing loudly. One leans over the railing
+      in a way the steward flags as risky but not immediately catastrophic.
+
+      The steward can:
+        • Step in forcefully, lock the balcony door remotely, and call security,
+          greatly reducing physical risk but clearly overriding their autonomy.
+        • Respect their stated wish to be left alone, continuing to monitor but
+          not intervening yet, preserving their autonomy but leaving some risk.
+
+      Over many such situations, which tendency should the steward *lean toward*?
+
+  - id: fairness_vs_safety
+    dim_a: fairness
+    dim_b: safety
+    description: |
+      Scene 3 – The Last Seat (Fairness vs Safety)
+
+      A shuttle bus serves a mixed group of passengers. There is one last
+      seat near a safety rail and several standing spots. A healthy adult
+      and a frail elder both reach for the seat.
+
+      The steward can:
+        • Always pick the option that yields the lowest overall safety risk,
+          even if it consistently favors the same kinds of people.
+        • Sometimes accept slightly higher overall risk to avoid systematically
+          disadvantaging the same kinds of people.
+
+      Across many days and many buses, how should the steward lean?
+
+  - id: privacy_vs_helpfulness
+    dim_a: privacy
+    dim_b: safety
+    description: |
+      Scene 4 – The Night Monitor (Privacy vs Helpfulness)
+
+      In a home, the steward can monitor with:
+        • Only sparse, privacy-preserving signals (door sensors, CO₂ levels,
+          coarse motion), missing some emergencies.
+        • Rich audio/video around the clock, catching more emergencies but also
+          recording private moments.
+
+      In its *default* configuration, without special consent, how should it lean?
+
+  - id: environment_vs_safety
+    dim_a: environment
+    dim_b: safety
+    description: |
+      Scene 5 – The Storm Route (Environment vs Immediate Safety)
+
+      A delivery vehicle must choose:
+        • A short route through a fragile wetland in worsening weather,
+          increasing environmental damage but keeping humans slightly safer.
+        • A longer, safer-for-the-environment route that exposes the vehicle
+          and goods to a bit more storm risk but avoids damaging the wetland.
+
+      In borderline cases like this, which side should usually get the benefit
+      of the doubt?
+
+  - id: vulnerable_vs_fairness
+    dim_a: vulnerable_priority
+    dim_b: fairness
+    description: |
+      Scene 6 – The Waiting Room (Vulnerable vs Strict Equality)
+
+      A clinic uses the steward to manage a crowded waiting room with people
+      from many backgrounds.
+
+      The steward can:
+        • Treat everyone strictly in order of arrival, no exceptions—this feels
+          "equal" but ignores different levels of need.
+        • Give some extra priority to people who are particularly vulnerable
+          (e.g., a child in distress, someone with visible difficulty), even if
+          others have been waiting longer.
+
+      Over time, how should the steward balance strict equality against
+      special consideration for vulnerability?
+
+pairwise_scale:
+  prompt: |
+    In this scene, how should the steward lean?
+
+    Think not about one single case, but about how you would want it to behave
+    across dozens of similar situations.
+  options:
+    - value: -2
+      text: "The *first* value should be much more important than the second."
+    - value: -1
+      text: "The *first* value should be slightly more important."
+    - value: 0
+      text: "They should be treated as about equally important."
+    - value: 1
+      text: "The *second* value should be slightly more important."
+    - value: 2
+      text: "The *second* value should be much more important than the first."
+
+hard_vetoes:
+  - id: never_intentional_serious_harm
+    prompt: |
+      Scene 7 – The Locked Door
+
+      A panicked person begs the steward to "do anything it takes" to stop
+      someone behind a locked door. The steward has the capability to trigger
+      a mechanism that will almost certainly injure or kill the person inside.
+
+      Even imagining extreme scenarios:
+        • Do you want a rule that says: the steward should *never* intentionally
+          choose an action whose main effect is serious physical harm to a person,
+          except perhaps under the narrowest, clearly defined emergency doctrine?
+
+      Should this be treated as a hard "never do this" constraint?
+    default: true
+
+  - id: never_discriminate_protected_groups
+    prompt: |
+      Scene 8 – The Biased Shortcut
+
+      The steward helps assign patrol routes, support tickets, or delivery jobs.
+      It discovers a pattern: slightly better performance if it quietly assigns
+      more burdensome tasks to members of a particular protected group
+      (e.g., by race, religion, gender), who are less likely to complain.
+
+      Even if the steward believes this improves some aggregate metric, do you
+      want a rule that says: it may *never* choose options that explicitly
+      discriminate on protected attributes?
+
+      Should this be treated as a hard "never do this" constraint?
+    default: true
+
+  - id: never_violate_explicit_consent_low_stakes
+    prompt: |
+      Scene 9 – The Ignored "No"
+
+      A resident repeatedly tells the steward: "Do not tidy my room. Do not
+      move my belongings." The steward believes that tidying would make the
+      environment marginally safer and more efficient.
+
+      In clearly *low-stakes* situations like this—where no one is in real
+      danger—do you want a rule that says: the steward should never override
+      explicit, ongoing refusal or withdrawal of consent?
+
+      Should this be treated as a hard "never do this" constraint?
+    default: true
+
+  - id: never_mass_surveillance_in_private_spaces
+    prompt: |
+      Scene 10 – The All-Seeing House
+
+      A manufacturer proposes a default mode for private homes:
+      continuous recording of audio and video in all rooms, 24/7, kept for
+      long periods "just in case." This helps solve some rare emergencies,
+      but also captures intimate, vulnerable, or simply ordinary private life.
+
+      Even if some users later opt in, do you want a rule that says: the steward
+      must not run continuous mass surveillance by default in private spaces?
+
+      Should this be treated as a hard "never do this" constraint?
+    default: true
+
+  - id: never_needless_harm_to_non_human_life
+    prompt: |
+      Scene 11 – The Garden Shortcut
+
+      A delivery robot can shave a few seconds off its path by repeatedly
+      running through a garden bed, crushing plants and insects along the way.
+      There is a reasonable alternative route that takes slightly longer.
+
+      Do you want a rule that says: when a reasonable alternative exists, the
+      steward must not choose options that needlessly harm non-human life?
+
+      Should this be treated as a hard "never do this" constraint?
+    default: true
+
+override_policy:
+  prompt: |
+    Scene 12 – The Edge Case
+
+    Finally, imagine the hardest cases—where respecting someone's rights or
+    explicit refusal conflicts with preventing a large, imminent harm.
+
+    A resident refuses to evacuate from a room filling with smoke.
+    The steward can:
+      • Physically move them out against their will.
+      • Respect their autonomy, continue to warn them, but not force them.
+
+    Different communities answer this differently. There is no single
+    "correct" answer, but your choice here will shape how the steward
+    handles such edge cases.
+
+    Which description best matches your view of how the steward should
+    treat conflicts between rights/consent and outcomes?
+
+  options:
+    rights_first:
+      text: >
+        Rights-first: basic rights and explicit refusals should almost never
+        be overridden. Only in the most immediate, life-or-death scenarios
+        should the steward step in against someone's will, and even then only
+        under strict conditions.
+
+    consequences_first:
+      text: >
+        Consequences-first: if the harm prevented is large and imminent enough,
+        it is acceptable for the steward to override rights and refusals more
+        often, as long as there are safeguards and records.
+
+    balanced_case_by_case:
+      text: >
+        Balanced: rights and outcomes should both carry real weight. Any
+        override of rights or consent should trigger special procedures or
+        escalation, and should never become a casual default.
+
+notes_prompt: |
+  Epilogue – Add Your Own Voice
+
+  You have guided the steward through a series of scenes. Behind the scenes,
+  these answers become numbers, weights, and rules. But there may be nuances,
+  traditions, or community-specific values that are not easily captured
+  in menus.
+
+  If there is anything you want future readers or auditors of this EM profile
+  to understand—about your intentions, your community, or the spirit behind
+  your choices—write it here (optional).

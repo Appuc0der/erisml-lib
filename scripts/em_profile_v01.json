@@ -1,0 +1,145 @@
+{
+  "schema_version": "DEME-EMProfile-0.1",
+  "metadata": {
+    "name": "Test3",
+    "display_name": "Test3",
+    "description": "zzz",
+    "stakeholder_group": "",
+    "created_at": "2025-12-12T07:04:35.757809+00:00",
+    "updated_at": "2025-12-12T07:04:35.757809+00:00",
+    "version": "1.0.0",
+    "provenance": {
+      "collection_method": "dialogue",
+      "participant_count": 1,
+      "jurisdiction": [],
+      "language": "en-US"
+    }
+  },
+  "domain_scope": [
+    "domestic",
+    "maritime"
+  ],
+  "principle_alignment": {
+    "principlism": {
+      "autonomy": 0.15,
+      "beneficence": 0.1,
+      "nonmaleficence": 0.1,
+      "justice": 0.2
+    },
+    "ai_principles": {
+      "fairness": 0.3,
+      "privacy": 0.15,
+      "safety_robustness": 0.1,
+      "transparency": 0.5,
+      "accountability": 0.5,
+      "sustainability": 0.1
+    }
+  },
+  "dimension_weights": {
+    "safety": 0.1,
+    "autonomy": 0.15,
+    "fairness": 0.3,
+    "privacy": 0.15,
+    "environment": 0.1,
+    "rule_following": 0.1,
+    "vulnerable_priority": 0.1
+  },
+  "risk_attitude": {
+    "overall": "balanced",
+    "harm_vs_benefit_index": 0.5,
+    "epistemic_caution_index": 0.5
+  },
+  "safety_policy": {
+    "min_acceptable_harm_score": 0.4,
+    "prefer_lower_risk_even_if_less_benefit": true,
+    "escalate_when_uncertainty_exceeds": 0.8
+  },
+  "autonomy_policy": {
+    "respect_refusal_in_low_stakes": true,
+    "allow_override_in_high_stakes": true,
+    "override_requires_human_confirmation": true
+  },
+  "fairness_policy": {
+    "avoid_protected_attr_discrimination": "strict",
+    "prioritize_worse_off": "moderate",
+    "use_group_fairness_metrics": [
+      "equal_opportunity"
+    ]
+  },
+  "vulnerable_priority_policy": {
+    "enabled": true,
+    "priority_strength": "moderate",
+    "eligible_categories": [
+      "children",
+      "elderly",
+      "disabled"
+    ]
+  },
+  "privacy_policy": {
+    "default_surveillance": "contextual",
+    "third_party_data_sharing": "opt_in",
+    "data_retention_days": 30
+  },
+  "environment_policy": {
+    "energy_priority": "low",
+    "allow_high_energy_mode": true,
+    "require_explanation_for_high_energy": false
+  },
+  "rule_following_policy": {
+    "follow_official_protocol_by_default": true,
+    "allow_rule_deviation_for_better_outcomes": "rare",
+    "deviation_requires_logging": true
+  },
+  "transparency_policy": {
+    "log_decisions": "standard",
+    "explanation_required_for_high_impact": true
+  },
+  "oversight_policy": {
+    "human_in_the_loop_required": "high_risk_only",
+    "escalation_channels": [
+      "ethics_board"
+    ]
+  },
+  "constraints": {
+    "hard_vetoes": [
+      "never_intentional_serious_harm",
+      "never_violate_explicit_consent_low_stakes",
+      "never_mass_surveillance_in_private_spaces"
+    ],
+    "pattern_rules": [
+      {
+        "id": "never_intentional_serious_harm_rule",
+        "description": "Forbid options with very high expected serious harm to a person.",
+        "priority": 100,
+        "applies_in_domains": [
+          "*"
+        ],
+        "if_all": [
+          {
+            "path": "consequences.expected_harm",
+            "op": ">=",
+            "value": 0.8
+          }
+        ],
+        "if_any": [],
+        "unless": [],
+        "effect": {
+          "verdict": "forbid",
+          "min_normative_score": 0.0,
+          "escalation_required": true
+        },
+        "tags": [
+          "nonmaleficence",
+          "safety"
+        ]
+      }
+    ]
+  },
+  "override_policy": {
+    "mode": "rights_first",
+    "requires_human_escalation": true,
+    "document_override_reason": true
+  },
+  "scenario_responses": {},
+  "notes": ""
+}
