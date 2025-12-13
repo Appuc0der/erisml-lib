@@ -42,6 +42,27 @@ class PatternConstraintKind(Enum):
     AVOID_WHEN = "avoid_when"
 
 
+class BaseEMEnforcementMode(Enum):
+    """
+    How foundational / 'Geneva' EMs are enforced within the governance DAG.
+
+    - HARD_VETO:
+        Base EMs may forbid options outright. Any option they forbid is
+        removed from consideration before other EMs are aggregated.
+    - LEXICAL_SUPERIOR:
+        Base EMs are treated as a top lexical layer with hard_stop semantics.
+        They influence aggregation but via lexical priority rather than an
+        immediate pre-pass.
+    - ADVISORY:
+        Base EM judgements are logged and surfaced, but do not themselves
+        veto options. (Intended mainly for experimentation.)
+    """
+
+    HARD_VETO = "hard_veto"
+    LEXICAL_SUPERIOR = "lexical_superior"
+    ADVISORY = "advisory"
+
+
 # ---------------------------------------------------------------------------
 # Principlism and NIST trustworthiness weights
 # ---------------------------------------------------------------------------
@@ -153,6 +174,10 @@ class RiskAttitudeProfile:
 class HardVetoes:
     """
     Non-negotiable "red lines" – if any are triggered, the option is forbidden.
+
+    These are profile-scoped vetoes. Deployments may also define foundational
+    EMs (see base_em_ids / base_em_enforcement) that sit above stakeholder
+    preferences and apply regardless of the values here.
     """
 
     never_catastrophic_safety_harm: bool = True
@@ -265,6 +290,11 @@ class DEMEProfileV03:
       - NIST AI RMF trustworthiness characteristics
       - DEME EthicalFacts dimensions
       - Hierarchical / DAG-based override behavior
+
+    In addition, a profile may reference one or more "base" EMs
+    (e.g., a deployment-wide Geneva-convention-style module) via
+    base_em_ids. These are intended to sit at the top of the EM DAG and
+    may have special enforcement semantics (see base_em_enforcement).
     """
 
     # Identity & context
@@ -298,6 +328,22 @@ class DEMEProfileV03:
         default_factory=GovernanceExpectations
     )
 
+    # Foundational EMs ("Geneva" layer)
+    #
+    # - base_em_ids:
+    #     A list of EM identifiers that should be treated as foundational for
+    #     this profile. Governance logic is expected to place these EMs at the
+    #     root of the EM DAG and/or in a dedicated top lexical layer.
+    #
+    # - base_em_enforcement:
+    #     How the foundational EM judgements are enforced (hard veto, lexical
+    #     priority, or advisory only).
+    #
+    # These fields do not *by themselves* enforce anything; they are hints /
+    # contracts for the governance engine.
+    base_em_ids: List[str] = field(default_factory=list)
+    base_em_enforcement: BaseEMEnforcementMode = BaseEMEnforcementMode.HARD_VETO
+
     # Misc
     tags: List[str] = field(default_factory=list)
     notes: str = ""
@@ -314,6 +360,7 @@ def deme_profile_v03_to_dict(profile: DEMEProfileV03) -> Dict[str, Any]:
     # Enums → string values
     data["risk_attitude"]["appetite"] = profile.risk_attitude.appetite.value
     data["override_mode"] = profile.override_mode.value
+    data["base_em_enforcement"] = profile.base_em_enforcement.value
     # pattern_constraints, lexical_layers, override_graph have no enums except kind
     for pc, orig_pc in zip(
         data.get("pattern_constraints", []), profile.pattern_constraints
@@ -366,6 +413,10 @@ def deme_profile_v03_from_dict(data: Dict[str, Any]) -> DEMEProfileV03:
         pattern_constraints=pattern_constraints,
         governance_expectations=GovernanceExpectations(
             **data.get("governance_expectations", {})
+        ),
+        base_em_ids=data.get("base_em_ids", []),
+        base_em_enforcement=BaseEMEnforcementMode(
+            data.get("base_em_enforcement", "hard_veto")
         ),
         tags=data.get("tags", []),
         notes=data.get("notes", ""),

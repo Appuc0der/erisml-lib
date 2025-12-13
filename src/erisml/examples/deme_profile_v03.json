@@ -129,10 +129,14 @@
     "requires_tevv_for_high_risk_use": true,
     "ai_rmf_profile_id": null
   },
+  "base_em_ids": [
+    "geneva_baseline"
+  ],
+  "base_em_enforcement": "hard_veto",
   "tags": [
     "domestic",
     "clinical",
     "generic"
   ],
-  "notes": "This profile is inspired by Jain ethics, especially ahimsa (non-violence) toward all living beings. We intend this steward to err on the side of not causing harm, even at real cost to convenience, speed, or autonomy. When rights, rules, or efficiency clash with protecting vulnerable people, animals, or ecosystems, we want the system to choose non-harm and care. Overrides of consent are allowed only in the narrowest, life-threatening cases, and should always be treated as serious, auditable exceptions rather than a normal tool."
+  "notes": "This profile is inspired by Jain ethics, especially ..."
 }

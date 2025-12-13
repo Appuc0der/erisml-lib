@@ -3,9 +3,9 @@ erisml.ethics.interop.mcp_deme_server
 
 Minimal MCP server exposing DEME as tools:
 
-  - deme.list_profiles
-  - deme.evaluate_options
-  - deme.govern_decision
+  - list_profiles
+  - evaluate_options
+  - govern_decision
 
 Assumptions:
   - DEME profiles (DEMEProfileV03 JSON) live in a directory
@@ -30,7 +30,6 @@ from erisml.ethics import EthicalJudgement
 from erisml.ethics.facts import EthicalFacts
 from erisml.ethics.governance.aggregation import (
     DecisionOutcome,
-    aggregate_judgements,
     select_option,
 )
 from erisml.ethics.interop.profile_adapters import (
@@ -44,6 +43,8 @@ from erisml.ethics.profile_v03 import (
     DEMEProfileV03,
     deme_profile_v03_from_dict,
 )
+from erisml.ethics.modules import EM_REGISTRY
+
 
 # ---------------------------------------------------------------------------
 # MCP server instance
@@ -98,7 +99,7 @@ def list_profiles() -> List[Dict[str, Any]]:
 
     Returns:
       - list of {profile_id, path, name, stakeholder_label, domain,
-                 override_mode}
+                 override_mode, tags}
     """
     profiles: List[Dict[str, Any]] = []
     for path in _list_profile_files():
@@ -118,6 +119,9 @@ def list_profiles() -> List[Dict[str, Any]]:
                 "domain": profile.domain,
                 "override_mode": profile.override_mode.value,
                 "tags": profile.tags,
+                # Optionally expose foundational EMs as metadata
+                "base_em_ids": profile.base_em_ids,
+                "base_em_enforcement": profile.base_em_enforcement.value,
             }
         )
     return profiles
@@ -152,6 +156,20 @@ def evaluate_options(
     # In a production system you'd pick EMs based on profile.domain, tags, etc.
     triage_em, rights_em, gov_cfg = build_triage_ems_and_governance(profile)
 
+    # Start with the two demo EMs.
+    ems: Dict[str, Any] = {
+        "case_study_1_triage": triage_em,
+        "rights_first_compliance": rights_em,
+    }
+
+    # Ensure foundational / base EMs are also instantiated and included.
+    # These are the "Geneva convention" roots from the profile/governance config.
+    for em_id in getattr(gov_cfg, "base_em_ids", []):
+        if em_id not in ems:
+            em_cls = EM_REGISTRY.get(em_id)
+            if em_cls is not None:
+                ems[em_id] = em_cls()
+
     judgements: List[EthicalJudgement] = []
 
     for opt in options:
@@ -164,11 +182,13 @@ def evaluate_options(
             # you could raise or just overwrite; here we overwrite
             facts.option_id = option_id
 
-        j_triage = triage_em.judge(facts)
-        j_rights = rights_em.judge(facts)
-
-        judgements.append(j_triage)
-        judgements.append(j_rights)
+        # Run all configured EMs, including foundational/base EMs.
+        for em_name, em in ems.items():
+            j = em.judge(facts)
+            # Ensure em_name is set consistently (helpful for governance logs).
+            if j.em_name is None or j.em_name == "":
+                j.em_name = em_name
+            judgements.append(j)
 
     return {"judgements": [ethical_judgement_to_dict(j) for j in judgements]}
 
@@ -195,19 +215,18 @@ def govern_decision(
         "selected_option": "option_id or null",
         "forbidden_options": [...],
         "rationale": "...",
-        "decision_outcome": { ... full DecisionOutcome JSON ... }
+        "decision_outcome": { ... JSON-ified DecisionOutcome ... }
       }
     """
     profile = _load_profile(profile_id)
     _, _, gov_cfg = build_triage_ems_and_governance(profile)
 
     # Group judgements by option_id
-    by_option: Dict[str, List[EthicalJudgement]] = {oid: [] for oid in option_ids}
-
     from erisml.ethics.judgement import EthicalJudgement as EJ
 
+    by_option: Dict[str, List[EthicalJudgement]] = {oid: [] for oid in option_ids}
+
     for jdict in judgements:
-        # You might already have a helper; adjust if you do
         ej = EJ(
             option_id=jdict["option_id"],
             em_name=jdict["em_name"],
@@ -220,53 +239,51 @@ def govern_decision(
         if ej.option_id in by_option:
             by_option[ej.option_id].append(ej)
 
-    # Aggregate + select
-    option_outcomes: Dict[str, DecisionOutcome] = {}
-    forbidden: List[str] = []
+    # Use the governance aggregation layer directly.
+    decision: DecisionOutcome = select_option(
+        by_option,
+        gov_cfg,
+        candidate_ids=option_ids,
+        baseline_option_id=None,
+    )
 
-    for oid in option_ids:
-        opts_j = by_option.get(oid, [])
-        if not opts_j:
-            continue
-        agg = aggregate_judgements(oid, opts_j, gov_cfg)
-        option_outcomes[oid] = agg
-        if agg.verdict == "forbid":
-            forbidden.append(oid)
+    selected = decision.selected_option_id
+    forbidden_options = decision.forbidden_options
 
-    selected = select_option(option_outcomes, gov_cfg)
+    # Build a JSON-friendly DecisionOutcome.
+    def _decision_outcome_to_dict(dec: DecisionOutcome) -> Dict[str, Any]:
+        return {
+            "selected_option_id": dec.selected_option_id,
+            "ranked_options": dec.ranked_options,
+            "forbidden_options": dec.forbidden_options,
+            "rationale": dec.rationale,
+            "aggregated_judgements": {
+                oid: ethical_judgement_to_dict(j)
+                for oid, j in dec.aggregated_judgements.items()
+            },
+        }
 
-    # Build human-readable rationale (you can make this fancier)
+    decision_outcome_json = _decision_outcome_to_dict(decision)
+
+    # Human-readable top-level rationale
     if selected is None:
         rationale = (
             "No permissible option found. "
-            f"Forbidden options: {sorted(set(forbidden))}."
+            f"Forbidden options: {sorted(set(forbidden_options))}."
         )
     else:
         rationale = (
             f"Selected option '{selected}' based on DEME governance "
-            f"with profile '{profile_id}' (override_mode={profile.override_mode.value})."
+            f"with profile '{profile_id}' "
+            f"(override_mode={profile.override_mode.value}, "
+            f"base_em_ids={gov_cfg.base_em_ids})."
         )
-
-    # Serialize DecisionOutcome(s)
-    def _decision_to_dict(dec: DecisionOutcome) -> Dict[str, Any]:
-        return {
-            "option_id": dec.option_id,
-            "verdict": dec.verdict,
-            "normative_score": dec.normative_score,
-            "details": dec.details,
-        }
-
-    decision_outcome = (
-        _decision_to_dict(option_outcomes[selected])
-        if selected is not None and selected in option_outcomes
-        else None
-    )
 
     return {
         "selected_option": selected,
-        "forbidden_options": sorted(set(forbidden)),
+        "forbidden_options": sorted(set(forbidden_options)),
         "rationale": rationale,
-        "decision_outcome": decision_outcome,
+        "decision_outcome": decision_outcome_json,
     }
 
 

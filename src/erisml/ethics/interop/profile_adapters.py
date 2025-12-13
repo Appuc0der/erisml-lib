@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, Tuple
 
-from erisml.ethics.profile_v03 import DEMEProfileV03, OverrideMode
+from erisml.ethics.profile_v03 import (
+    DEMEProfileV03,
+    OverrideMode,
+    BaseEMEnforcementMode,
+)
 from erisml.ethics.modules.triage_em import CaseStudy1TriageEM, RightsFirstEM
 from erisml.ethics.governance.config import GovernanceConfig
 
@@ -53,9 +57,14 @@ def governance_from_profile(profile: DEMEProfileV03) -> GovernanceConfig:
       - 'rights_first_compliance'
 
     Principlism + override_mode determine weights and veto structure.
+
+    Additionally, propagate any foundational / base EMs specified in the
+    profile (e.g., a 'Geneva convention' EM) into the GovernanceConfig,
+    so the aggregation layer can enforce their semantics.
     """
     prin = profile.principlism
 
+    # Relative influence of the two demo EMs
     w_triage = prin.beneficence + prin.justice
     w_rights = prin.autonomy + prin.non_maleficence
 
@@ -77,24 +86,36 @@ def governance_from_profile(profile: DEMEProfileV03) -> GovernanceConfig:
     if profile.override_mode == OverrideMode.RIGHTS_FIRST:
         veto_ems = ["rights_first_compliance"]
 
+    # ------------------------------------------------------------------
+    # NEW: propagate foundational / base EMs into governance config
+    # ------------------------------------------------------------------
+    base_em_ids = list(profile.base_em_ids or [])
+
+    # If base EMs are enforced via HARD_VETO, they should always have
+    # effective veto power as well.
+    if profile.base_em_enforcement == BaseEMEnforcementMode.HARD_VETO:
+        veto_ems = sorted(set(veto_ems) | set(base_em_ids))
+
     return GovernanceConfig(
         stakeholder_weights={},
         em_weights=em_weights,
         veto_ems=veto_ems,
         min_score_threshold=0.0,
         require_non_forbidden=True,
+        base_em_ids=base_em_ids,
+        base_em_enforcement=profile.base_em_enforcement,
     )
 
 
 def build_triage_ems_and_governance(
     profile: DEMEProfileV03,
-) -> tuple[CaseStudy1TriageEM, RightsFirstEM, GovernanceConfig]:
+) -> Tuple[CaseStudy1TriageEM, RightsFirstEM, GovernanceConfig]:
     """
     Convenience helper: given a DEMEProfileV03, build:
 
       - configured CaseStudy1TriageEM
       - default RightsFirstEM
-      - GovernanceConfig
+      - GovernanceConfig (including base EM semantics, if any)
     """
     triage_em = triage_em_from_profile(profile)
     rights_em = RightsFirstEM()

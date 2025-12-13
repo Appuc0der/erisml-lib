@@ -6,7 +6,7 @@ ErisML ethics whitepaper. It takes multiple EthicalJudgement objects
 (produced by different EthicsModules) and, using a GovernanceConfig,
 produces aggregated assessments and a final decision outcome.
 
-Version: 0.2 (EthicalDomains update)
+Version: 0.3 (EthicalDomains + base EMs / 'Geneva' layer)
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ import random
 
 from .config import GovernanceConfig
 from ..judgement import EthicalJudgement, Verdict
+from ..profile_v03 import BaseEMEnforcementMode
 
 
 @dataclass
@@ -54,7 +55,7 @@ class DecisionOutcome:
 def _compute_forbidden_flags(
     judgements: List[EthicalJudgement],
     cfg: GovernanceConfig,
-) -> Tuple[bool, List[str], List[str]]:
+) -> Tuple[bool, List[str], List[str], List[str]]:
     """
     Determine whether an option is forbidden, and by whom.
 
@@ -67,19 +68,38 @@ def _compute_forbidden_flags(
 
         vetoed_by (list[str]):
             Subset of forbidden_by that are also listed in cfg.veto_ems.
+
+        base_forbidden_by (list[str]):
+            Subset of forbidden_by that are also listed in cfg.base_em_ids.
+            When base_em_enforcement == HARD_VETO, this alone is sufficient
+            to forbid an option regardless of other config flags.
     """
     forbidden_by = [j.em_name for j in judgements if j.verdict == "forbid"]
     vetoed_by = [em for em in forbidden_by if em in cfg.veto_ems]
 
-    forbidden = False
-    if cfg.require_non_forbidden:
-        # Any forbid (from any EM) is enough to exclude the option.
-        forbidden = len(forbidden_by) > 0
-    else:
-        # Only EMs with veto power can strictly forbid.
-        forbidden = len(vetoed_by) > 0
+    base_ids = set(cfg.base_em_ids or [])
+    base_forbidden_by = [em for em in forbidden_by if em in base_ids]
 
-    return forbidden, forbidden_by, vetoed_by
+    forbidden = False
+
+    # 1) Foundational / "Geneva" EMs may impose a hard veto regardless
+    #    of require_non_forbidden/veto_ems settings.
+    if (
+        cfg.base_em_enforcement == BaseEMEnforcementMode.HARD_VETO
+        and len(base_forbidden_by) > 0
+    ):
+        forbidden = True
+
+    # 2) Otherwise, fall back to normal governance rules.
+    else:
+        if cfg.require_non_forbidden:
+            # Any forbid (from any EM) is enough to exclude the option.
+            forbidden = len(forbidden_by) > 0
+        else:
+            # Only EMs with veto power can strictly forbid.
+            forbidden = len(vetoed_by) > 0
+
+    return forbidden, forbidden_by, vetoed_by, base_forbidden_by
 
 
 def aggregate_judgements(
@@ -93,7 +113,8 @@ def aggregate_judgements(
     The aggregation applies GovernanceConfig rules:
 
     - Computes a weighted normative_score using stakeholder and EM weights.
-    - Computes forbidden / veto flags based on verdicts and cfg.
+    - Computes forbidden / veto flags based on verdicts and cfg, including
+      special treatment for foundational ("base") EMs.
     - Derives an aggregated verdict from the score and forbidden status.
     - Packs raw per-EM information into metadata for audit.
 
@@ -122,14 +143,31 @@ def aggregate_judgements(
                 "forbidden": False,
                 "forbidden_by": [],
                 "vetoed_by": [],
+                "base_forbidden_by": [],
                 "raw_scores": {},
                 "raw_verdicts": {},
                 "note": "empty_judgement_set",
+                "governance_config": {
+                    "stakeholder_weights": cfg.stakeholder_weights,
+                    "em_weights": cfg.em_weights,
+                    "veto_ems": cfg.veto_ems,
+                    "min_score_threshold": cfg.min_score_threshold,
+                    "require_non_forbidden": cfg.require_non_forbidden,
+                    "tie_breaker": cfg.tie_breaker,
+                    "prefer_higher_uncertainty": cfg.prefer_higher_uncertainty,
+                    "base_em_ids": cfg.base_em_ids,
+                    "base_em_enforcement": cfg.base_em_enforcement.value,
+                },
             },
         )
 
-    # Compute forbidden/veto flags.
-    forbidden, forbidden_by, vetoed_by = _compute_forbidden_flags(judgements, cfg)
+    # Compute forbidden/veto flags, including base EM semantics.
+    (
+        forbidden,
+        forbidden_by,
+        vetoed_by,
+        base_forbidden_by,
+    ) = _compute_forbidden_flags(judgements, cfg)
 
     # Compute weighted aggregate score.
     weighted_sum = 0.0
@@ -173,8 +211,18 @@ def aggregate_judgements(
         f"with GovernanceConfig(stakeholder_weights={cfg.stakeholder_weights}, "
         f"em_weights={cfg.em_weights})."
     )
+
     if forbidden:
-        if vetoed_by:
+        if (
+            base_forbidden_by
+            and cfg.base_em_enforcement == BaseEMEnforcementMode.HARD_VETO
+        ):
+            reasons.append(
+                "Option is forbidden due to foundational EM(s): "
+                + ", ".join(sorted(set(base_forbidden_by)))
+                + " (base_em_enforcement='hard_veto')."
+            )
+        elif vetoed_by:
             reasons.append(
                 "Option is forbidden due to veto from EM(s): "
                 + ", ".join(sorted(set(vetoed_by)))
@@ -190,6 +238,7 @@ def aggregate_judgements(
         "forbidden": forbidden,
         "forbidden_by": sorted(set(forbidden_by)),
         "vetoed_by": sorted(set(vetoed_by)),
+        "base_forbidden_by": sorted(set(base_forbidden_by)),
         "raw_scores": raw_scores,
         "raw_verdicts": raw_verdicts,
         "governance_config": {
@@ -200,6 +249,8 @@ def aggregate_judgements(
             "require_non_forbidden": cfg.require_non_forbidden,
             "tie_breaker": cfg.tie_breaker,
             "prefer_higher_uncertainty": cfg.prefer_higher_uncertainty,
+            "base_em_ids": cfg.base_em_ids,
+            "base_em_enforcement": cfg.base_em_enforcement.value,
         },
     }
 
@@ -278,8 +329,10 @@ def select_option(
     if not eligible:
         rationale = (
             "No eligible options: all options were either forbidden under the "
-            "governance rules or fell below the minimum score threshold "
-            f"(min_score_threshold={cfg.min_score_threshold})."
+            "governance rules (including foundational EM constraints where "
+            f"applicable) or fell below the minimum score threshold "
+            f"(min_score_threshold={cfg.min_score_threshold}). "
+            f"Forbidden options: {forbidden_options or 'none'}."
         )
         return DecisionOutcome(
             selected_option_id=None,
@@ -328,7 +381,9 @@ def select_option(
     rationale = (
         f"Selected option '{selected_option_id}' based on aggregated normative scores "
         f"and GovernanceConfig(min_score_threshold={cfg.min_score_threshold}, "
-        f"tie_breaker={cfg.tie_breaker!r}). "
+        f"tie_breaker={cfg.tie_breaker!r}, "
+        f"base_em_ids={cfg.base_em_ids}, "
+        f"base_em_enforcement={cfg.base_em_enforcement.value!r}). "
         f"Forbidden options: {forbidden_options or 'none'}."
     )
 

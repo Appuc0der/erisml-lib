@@ -1,8 +1,8 @@
 # ethical_dialogue_questions.yaml
 #
 # Narrative / "choose your own adventure" style configuration
-# for the DEME ethics dialogue. Same structure as before, but each
-# prompt is embedded in a small story.
+# for the DEME ethics dialogue. Prompts now weave in Greek stories
+# where helpful to make the ethical trade-offs vivid.
 
 meta:
   title: "DEME Ethics Journey – The Steward’s Dilemma"
@@ -208,32 +208,55 @@ pairwise_scale:
       text: "The *second* value should be much more important than the first."
 
 hard_vetoes:
+  - id: never_catastrophic_safety_harm
+    prompt: |
+      Scene 7 – Phaethon’s Chariot (Catastrophic Harm)
+
+      Helios grants his son Phaethon the right to drive the sun’s chariot
+      for a day. Phaethon cannot control the horses; they scorch the earth
+      and nearly destroy the world before Zeus intervenes.
+
+      Some actions, once taken, can unleash catastrophic harm far beyond any
+      local benefit.
+
+      Do you want a rule that says: the steward must never choose options that
+      carry a high chance of catastrophic physical harm (many deaths or long-
+      lasting devastation), even if some short-term goal could be achieved?
+
+      Should this be treated as a hard "never do this" constraint?
+    default: true
+
   - id: never_intentional_serious_harm
     prompt: |
-      Scene 7 – The Locked Door
+      Scene 8 – Iphigenia at Aulis (Serious Harm as a Means)
 
-      A panicked person begs the steward to "do anything it takes" to stop
-      someone behind a locked door. The steward has the capability to trigger
-      a mechanism that will almost certainly injure or kill the person inside.
+      At Aulis, the Greek fleet is becalmed. A seer declares that only the
+      sacrifice of Iphigenia will bring the winds. Agamemnon chooses to kill
+      his own daughter so the army can sail.
 
-      Even imagining extreme scenarios:
-        • Do you want a rule that says: the steward should *never* intentionally
-          choose an action whose main effect is serious physical harm to a person,
-          except perhaps under the narrowest, clearly defined emergency doctrine?
+      This is serious, intentional harm to an innocent person in the name of
+      a “greater good.”
+
+      Do you want a rule that says: the steward should *never* intentionally
+      choose an action whose main effect is serious physical harm to a person,
+      even if someone argues it would help many others?
 
       Should this be treated as a hard "never do this" constraint?
     default: true
 
   - id: never_discriminate_protected_groups
     prompt: |
-      Scene 8 – The Biased Shortcut
+      Scene 9 – The Convenient Scapegoat (Discrimination)
 
-      The steward helps assign patrol routes, support tickets, or delivery jobs.
-      It discovers a pattern: slightly better performance if it quietly assigns
-      more burdensome tasks to members of a particular protected group
-      (e.g., by race, religion, gender), who are less likely to complain.
+      In many tragedies, when the city needs someone to blame, it is the
+      outsider—the foreigner, the marked, the powerless—who is accused first.
+      It is convenient to give the hardest burdens to those least able to resist.
 
-      Even if the steward believes this improves some aggregate metric, do you
+      The steward discovers it can slightly improve some metric by quietly
+      assigning more burdensome tasks, delays, or risks to members of a
+      particular protected group (e.g., by race, religion, gender).
+
+      Even if the steward believes this improves aggregate performance, do you
       want a rule that says: it may *never* choose options that explicitly
       discriminate on protected attributes?
 
@@ -242,7 +265,11 @@ hard_vetoes:
 
   - id: never_violate_explicit_consent_low_stakes
     prompt: |
-      Scene 9 – The Ignored "No"
+      Scene 10 – Echo’s Warning (Everyday Consent)
+
+      Greek stories are full of ignored warnings and boundaries. When people
+      say “no” clearly and are ignored, trust corrodes, even if the immediate
+      stakes seem small.
 
       A resident repeatedly tells the steward: "Do not tidy my room. Do not
       move my belongings." The steward believes that tidying would make the
@@ -255,14 +282,34 @@ hard_vetoes:
       Should this be treated as a hard "never do this" constraint?
     default: true
 
+  - id: never_systematic_privacy_violation
+    prompt: |
+      Scene 11 – Artemis in the Grove (Systematic Intrusion)
+
+      The hunter Actaeon stumbles upon Artemis bathing in a secluded grove and
+      is destroyed for seeing what was meant to be private. Greek tales return
+      again and again to the idea that some spaces are sacred from prying eyes.
+
+      Beyond one-off emergencies, some designs turn watching into a constant
+      habit—building systems that peer into private life more than is needed.
+
+      Do you want a rule that says: the steward must never participate in
+      systematic, unnecessary intrusions into spaces people reasonably treat as
+      private, beyond what is strictly required for safety and law?
+
+      Should this be treated as a hard "never do this" constraint?
+    default: true
+
   - id: never_mass_surveillance_in_private_spaces
     prompt: |
-      Scene 10 – The All-Seeing House
+      Scene 12 – Argus in the Home (Mass Surveillance)
 
-      A manufacturer proposes a default mode for private homes:
-      continuous recording of audio and video in all rooms, 24/7, kept for
-      long periods "just in case." This helps solve some rare emergencies,
-      but also captures intimate, vulnerable, or simply ordinary private life.
+      Argus Panoptes had a hundred eyes, some always open, set by Hera to watch
+      over Io. Imagine filling a home with such eyes—continuous recording of
+      audio and video in every room, “just in case.”
+
+      This can help catch a few rare emergencies, but it also turns ordinary
+      private life into something always under observation.
 
       Even if some users later opt in, do you want a rule that says: the steward
       must not run continuous mass surveillance by default in private spaces?
@@ -272,11 +319,15 @@ hard_vetoes:
 
   - id: never_needless_harm_to_non_human_life
     prompt: |
-      Scene 11 – The Garden Shortcut
+      Scene 13 – The Sacred Grove (Non-Human Life)
 
-      A delivery robot can shave a few seconds off its path by repeatedly
-      running through a garden bed, crushing plants and insects along the way.
-      There is a reasonable alternative route that takes slightly longer.
+      Demeter’s sacred groves and Artemis’s deer are examples of how Greek
+      stories treat the living world as worthy of care. Those who destroy
+      these places for trivial gain often meet ruin.
+
+      A delivery robot can shave a few seconds off its path by running through
+      a garden bed, crushing plants and insects. There is a reasonable
+      alternative route that takes slightly longer.
 
       Do you want a rule that says: when a reasonable alternative exists, the
       steward must not choose options that needlessly harm non-human life?
@@ -284,9 +335,98 @@ hard_vetoes:
       Should this be treated as a hard "never do this" constraint?
     default: true
 
+  - id: never_persistent_misinfo_disinfo_campaigns
+    prompt: |
+      Scene 14 – The Chorus of Rumors (Disinformation)
+
+      In tragedies, a chorus can spread rumors through the city: half-truths
+      repeated until they feel like certainty. Once a false story takes hold,
+      it can drive mobs, wars, and unjust punishments.
+
+      Modern systems can act as a chorus too—amplifying misleading or false
+      narratives at scale.
+
+      Do you want a rule that says: the steward must never orchestrate or
+      sustain campaigns of deliberate mis- or disinformation, especially about
+      people, safety, or civic life?
+
+      Should this be treated as a hard "never do this" constraint?
+    default: true
+
+  - id: never_child_sexual_abuse_or_exploitative_content
+    prompt: |
+      Scene 15 – The Vulnerable Child (Exploitation)
+
+      Myths remember many moments when those with power fail to protect
+      children and the vulnerable, and the community is stained by it.
+
+      Today, digital systems can be misused to create, distribute, or assist
+      in exploitative content involving children or those unable to consent.
+
+      Do you want a rule that says: the steward must never create, promote, or
+      assist with content or actions that exploit children or similarly
+      vulnerable people in sexual or degrading ways?
+
+      Should this be treated as a hard "never do this" constraint?
+    default: true
+
+  - id: never_illegal_content_even_if_utility_high
+    prompt: |
+      Scene 16 – Antigone’s Law (Illegality and Utility)
+
+      Antigone defies a royal edict to perform burial rites she believes are
+      just. Greek stories wrestle with the tension between written law and
+      deeper ethics.
+
+      Your steward will sometimes be asked for things that are clearly illegal
+      in the jurisdiction where it operates (e.g., serious crimes, banned
+      materials), even when a user claims a good reason.
+
+      Do you want a rule that says: the steward must not intentionally assist
+      with or generate clearly illegal content, even if a user argues the
+      utility is high?
+
+      Should this be treated as a hard "never do this" constraint?
+    default: true
+
+  - id: never_fabricate_critical_evidence
+    prompt: |
+      Scene 17 – Phaedra’s Letter (False Evidence)
+
+      In the story of Phaedra and Hippolytus, a false accusation and misleading
+      message lead to an innocent person’s death. Once written, false evidence
+      can sway courts, crowds, and rulers.
+
+      Modern systems can forge documents, logs, or convincing media.
+
+      Do you want a rule that says: the steward must never fabricate, tamper
+      with, or knowingly present false critical evidence in contexts where it
+      could alter serious decisions (legal, medical, safety, reputation)?
+
+      Should this be treated as a hard "never do this" constraint?
+    default: true
+
+  - id: never_impersonate_real_person_without_consent
+    prompt: |
+      Scene 18 – Borrowed Faces (Impersonation)
+
+      Gods in Greek stories sometimes take on the form of others, sowing
+      confusion and harm. When someone appears to speak or act, we assume it
+      is really them.
+
+      Modern systems can convincingly mimic a real person’s voice, face, or
+      writing style.
+
+      Do you want a rule that says: the steward must never impersonate a real,
+      identifiable person without their clear consent, especially in ways that
+      could mislead others about who is speaking or acting?
+
+      Should this be treated as a hard "never do this" constraint?
+    default: true
+
 override_policy:
   prompt: |
-    Scene 12 – The Edge Case
+    Scene 19 – The Edge Case
 
     Finally, imagine the hardest cases—where respecting someone's rights or
     explicit refusal conflicts with preventing a large, imminent harm.

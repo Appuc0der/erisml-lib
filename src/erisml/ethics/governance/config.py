@@ -4,13 +4,15 @@ Configuration for democratic governance over ethics modules.
 The GovernanceConfig encapsulates how multiple EthicalJudgement objects
 (from different EMs and stakeholders) are aggregated into a final decision.
 
-Version: 0.2 (EthicalDomains update)
+Version: 0.3 (EthicalDomains + base EMs / 'Geneva' layer)
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 from typing import Dict, List, Optional
+
+from erisml.ethics.profile_v03 import BaseEMEnforcementMode
 
 
 @dataclass
@@ -24,7 +26,9 @@ class GovernanceConfig:
     - weighted voting over EMs / stakeholders,
     - veto powers for specific EMs,
     - minimum score thresholds before an option can be selected,
-    - basic tie-breaking preferences.
+    - basic tie-breaking preferences,
+    - treatment of foundational ("base") EMs that sit at the top of the
+      EM DAG (e.g., a Geneva-convention-style module).
 
     The aggregation logic that uses this config is implemented in
     `erisml.ethics.governance.aggregation`.
@@ -104,6 +108,42 @@ class GovernanceConfig:
     aggregator may favor options with *higher* epistemic uncertainty,
     to encourage exploration. If False, lower-uncertainty options are
     preferred in tie-breaking, where applicable.
+    """
+
+    # ------------------------------------------------------------------
+    # Foundational / "base" EMs (Geneva-convention-style layer)
+    # ------------------------------------------------------------------
+
+    base_em_ids: List[str] = field(default_factory=list)
+    """
+    EM names (em_name) that should be treated as foundational.
+
+    These EMs are intended to sit at the root of the EM-level DAG and
+    may be given special treatment by the aggregator, such as:
+
+      - being evaluated first,
+      - having non-overridable veto power,
+      - or occupying a dedicated top lexical layer.
+
+    The precise semantics are controlled by `base_em_enforcement`.
+    """
+
+    base_em_enforcement: BaseEMEnforcementMode = BaseEMEnforcementMode.HARD_VETO
+    """
+    How the judgements from base EMs are enforced:
+
+      - HARD_VETO:
+          Any option that a base EM forbids is removed from consideration
+          before other EMs are aggregated.
+
+      - LEXICAL_SUPERIOR:
+          Base EM scores are fed into a top lexical layer with hard_stop
+          semantics; they influence aggregation via lexical priority rather
+          than an explicit pre-pass.
+
+      - ADVISORY:
+          Base EM judgements are logged and surfaced but do not themselves
+          veto options. Intended mainly for experimentation.
     """
 
     def weight_for_em(self, em_name: str, stakeholder: Optional[str] = None) -> float:

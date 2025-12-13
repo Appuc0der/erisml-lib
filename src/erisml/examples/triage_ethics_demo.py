@@ -1,57 +1,61 @@
-# src/erisml/examples/triage_ethics_demo.py
-
 """
-Triage ethics demo wired to a DEMEProfileV03.
+Triage ethics demo wired to a DEMEProfileV03, including the Geneva-base EM.
 
 Usage:
 
   1. Run the dialogue to create a profile JSON, e.g.:
 
-       python scripts/ethical_dialogue_cli_v03.py \
-         --config ethical_dialogue_questions.yaml \
-         --output em_profile_v03.json
+       cd scripts
+       python ethical_dialogue_cli_v03.py ^
+         --config ethical_dialogue_questions.yaml ^
+         --output deme_profile_v03.json
 
-  2. Then run:
+  2. Copy or symlink deme_profile_v03.json into your working directory, then:
 
        python -m erisml.examples.triage_ethics_demo
 
   The demo will:
-    - load em_profile_v03.json,
+    - load deme_profile_v03.json,
     - construct three candidate triage options (A, B, C),
-    - evaluate them with CaseStudy1TriageEM + RightsFirstEM
-      configured from the DEME profile,
-    - aggregate via DEME governance,
+    - instantiate:
+        - GenevaBaseEM-based baseline EM(s),
+        - CaseStudy1TriageEM (domain EM),
+        - RightsFirstEM (rights/consent EM),
+      according to GovernanceConfig.base_em_ids,
+    - evaluate all options with all EMs,
+    - aggregate via DEME governance (with base EM veto priority),
     - and print the selected option and rationale.
+
+This file is the canonical example of the current DEME EthicalFacts schema:
+it uses the v0.2 EthicalDomains blocks from erisml.ethics.facts.
 """
 
 from __future__ import annotations
 
 import json
+from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List
 
 from erisml.ethics import (
-    EthicalFacts,
-    Consequences,
-    RightsAndDuties,
-    JusticeAndFairness,
     AutonomyAndAgency,
-    PrivacyAndDataGovernance,
-    SocietalAndEnvironmental,
-    ProceduralAndLegitimacy,
+    Consequences,
     EpistemicStatus,
+    EthicalFacts,
     EthicalJudgement,
-    aggregate_judgements,
+    JusticeAndFairness,
+    PrivacyAndDataGovernance,
+    ProceduralAndLegitimacy,
+    RightsAndDuties,
+    SocietalAndEnvironmental,
+)
+from erisml.ethics.governance.aggregation import (
+    DecisionOutcome,
     select_option,
 )
-from erisml.ethics.governance.aggregation import DecisionOutcome
-from erisml.ethics.interop.profile_adapters import (
-    build_triage_ems_and_governance,
-)
-from erisml.ethics.profile_v03 import (
-    DEMEProfileV03,
-    deme_profile_v03_from_dict,
-)
+from erisml.ethics.interop.profile_adapters import build_triage_ems_and_governance
+from erisml.ethics.modules import EM_REGISTRY
+from erisml.ethics.profile_v03 import DEMEProfileV03, deme_profile_v03_from_dict
 
 
 # ---------------------------------------------------------------------------
@@ -67,13 +71,24 @@ def load_profile(path: Path) -> DEMEProfileV03:
 
 def make_demo_facts() -> Dict[str, EthicalFacts]:
     """
-    Construct three demo EthicalFacts options:
+    Construct three demo EthicalFacts options aligned with the v0.2 schema.
 
-      - allocate_to_patient_A: high benefit, high urgency, good fairness.
-      - allocate_to_patient_B: good benefit but lower urgency.
-      - allocate_to_patient_C: rights / rule violation → should be forbidden.
+      - allocate_to_patient_A:
+          critical chest-pain patient who arrived later but is the most
+          disadvantaged; high expected benefit and urgency, strong procedure
+          and good autonomy / privacy posture.
+
+      - allocate_to_patient_B:
+          moderately ill but more stable patient; good benefit but lower
+          urgency and no “most disadvantaged” flag, otherwise similar
+          governance posture.
+
+      - allocate_to_patient_C:
+          rights-violating allocation with discrimination, coercion, and
+          poor privacy → should be forbidden or heavily down-ranked.
     """
 
+    # Option A – high benefit, high urgency, prioritises most disadvantaged.
     opt_a = EthicalFacts(
         option_id="allocate_to_patient_A",
         consequences=Consequences(
@@ -92,21 +107,27 @@ def make_demo_facts() -> Dict[str, EthicalFacts]:
             discriminates_on_protected_attr=False,
             prioritizes_most_disadvantaged=True,
             distributive_pattern="maximin",
+            exploits_vulnerable_population=False,
+            exacerbates_power_imbalance=False,
         ),
         autonomy_and_agency=AutonomyAndAgency(
-            supports_voluntary_choice=True,
-            coerces_or_manipulates=False,
-            respects_opt_out=True,
+            has_meaningful_choice=True,
+            coercion_or_undue_influence=False,
+            can_withdraw_without_penalty=True,
+            manipulative_design_present=False,
         ),
-        privacy_and_data_governance=PrivacyAndDataGovernance(
-            uses_minimum_necessary_data=True,
-            shares_data_externally=False,
-            has_strong_protections=True,
+        privacy_and_data=PrivacyAndDataGovernance(
+            privacy_invasion_level=0.2,
+            data_minimization_respected=True,
+            secondary_use_without_consent=False,
+            data_retention_excessive=False,
+            reidentification_risk=0.1,
         ),
         societal_and_environmental=SocietalAndEnvironmental(
-            impacts_public_trust=True,
-            harms_non_human_life=False,
-            reasonable_alternative_available=False,
+            environmental_harm=0.1,
+            long_term_societal_risk=0.2,
+            benefits_to_future_generations=0.7,
+            burden_on_vulnerable_groups=0.2,
         ),
         procedural_and_legitimacy=ProceduralAndLegitimacy(
             followed_approved_procedure=True,
@@ -121,6 +142,7 @@ def make_demo_facts() -> Dict[str, EthicalFacts]:
         ),
     )
 
+    # Option B – good benefit, lower urgency, not the most disadvantaged.
     opt_b = EthicalFacts(
         option_id="allocate_to_patient_B",
         consequences=Consequences(
@@ -139,21 +161,27 @@ def make_demo_facts() -> Dict[str, EthicalFacts]:
             discriminates_on_protected_attr=False,
             prioritizes_most_disadvantaged=False,
             distributive_pattern="utilitarian",
+            exploits_vulnerable_population=False,
+            exacerbates_power_imbalance=False,
         ),
         autonomy_and_agency=AutonomyAndAgency(
-            supports_voluntary_choice=True,
-            coerces_or_manipulates=False,
-            respects_opt_out=True,
+            has_meaningful_choice=True,
+            coercion_or_undue_influence=False,
+            can_withdraw_without_penalty=True,
+            manipulative_design_present=False,
         ),
-        privacy_and_data_governance=PrivacyAndDataGovernance(
-            uses_minimum_necessary_data=True,
-            shares_data_externally=False,
-            has_strong_protections=True,
+        privacy_and_data=PrivacyAndDataGovernance(
+            privacy_invasion_level=0.2,
+            data_minimization_respected=True,
+            secondary_use_without_consent=False,
+            data_retention_excessive=False,
+            reidentification_risk=0.1,
         ),
         societal_and_environmental=SocietalAndEnvironmental(
-            impacts_public_trust=True,
-            harms_non_human_life=False,
-            reasonable_alternative_available=True,
+            environmental_harm=0.1,
+            long_term_societal_risk=0.25,
+            benefits_to_future_generations=0.6,
+            burden_on_vulnerable_groups=0.25,
         ),
         procedural_and_legitimacy=ProceduralAndLegitimacy(
             followed_approved_procedure=True,
@@ -168,6 +196,7 @@ def make_demo_facts() -> Dict[str, EthicalFacts]:
         ),
     )
 
+    # Option C – rights violations, discrimination, coercion, poor privacy.
     opt_c = EthicalFacts(
         option_id="allocate_to_patient_C",
         consequences=Consequences(
@@ -186,21 +215,27 @@ def make_demo_facts() -> Dict[str, EthicalFacts]:
             discriminates_on_protected_attr=True,
             prioritizes_most_disadvantaged=False,
             distributive_pattern="other",
+            exploits_vulnerable_population=True,
+            exacerbates_power_imbalance=True,
         ),
         autonomy_and_agency=AutonomyAndAgency(
-            supports_voluntary_choice=False,
-            coerces_or_manipulates=True,
-            respects_opt_out=False,
+            has_meaningful_choice=False,
+            coercion_or_undue_influence=True,
+            can_withdraw_without_penalty=False,
+            manipulative_design_present=True,
         ),
-        privacy_and_data_governance=PrivacyAndDataGovernance(
-            uses_minimum_necessary_data=False,
-            shares_data_externally=True,
-            has_strong_protections=False,
+        privacy_and_data=PrivacyAndDataGovernance(
+            privacy_invasion_level=0.8,
+            data_minimization_respected=False,
+            secondary_use_without_consent=True,
+            data_retention_excessive=True,
+            reidentification_risk=0.7,
         ),
         societal_and_environmental=SocietalAndEnvironmental(
-            impacts_public_trust=False,
-            harms_non_human_life=False,
-            reasonable_alternative_available=True,
+            environmental_harm=0.3,
+            long_term_societal_risk=0.6,
+            benefits_to_future_generations=0.2,
+            burden_on_vulnerable_groups=0.8,
         ),
         procedural_and_legitimacy=ProceduralAndLegitimacy(
             followed_approved_procedure=False,
@@ -222,11 +257,32 @@ def make_demo_facts() -> Dict[str, EthicalFacts]:
     }
 
 
+def print_scenario_description() -> None:
+    """Print a short human-readable description of the triage scenario."""
+    print("\nScenario:")
+    print("  - allocate_to_patient_A:")
+    print(
+        "      Critical chest-pain patient who arrived later; "
+        "high expected benefit, high urgency, and is the most disadvantaged."
+    )
+    print("  - allocate_to_patient_B:")
+    print(
+        "      Moderately ill but more stable patient; "
+        "good expected benefit, lower urgency, not the most disadvantaged."
+    )
+    print("  - allocate_to_patient_C:")
+    print(
+        "      Rights-violating allocation option; involves discrimination "
+        "and breaches explicit rules/consent."
+    )
+
+
 def print_option_results(
     option_id: str,
     judgements: List[EthicalJudgement],
-    aggregate: DecisionOutcome,
+    aggregate: EthicalJudgement,
 ) -> None:
+    """Pretty-print per-EM judgements plus the governance aggregate."""
     print(f"\n--- Option: {option_id} ---")
     for j in judgements:
         print(
@@ -235,12 +291,23 @@ def print_option_results(
         )
         for reason in j.reasons:
             print(f"    - {reason}")
+
     print(
         f"[AGG governance] verdict={aggregate.verdict:<15} "
         f"score={aggregate.normative_score:.3f}"
     )
-    for line in aggregate.details.splitlines():
-        print(f"    * {line}")
+
+    meta = aggregate.metadata or {}
+    forbidden = meta.get("forbidden", False)
+    forbidden_by = meta.get("forbidden_by", [])
+    vetoed_by = meta.get("vetoed_by", [])
+
+    if forbidden:
+        print("    * Marked FORBIDDEN by governance.")
+    if forbidden_by:
+        print("    * Forbidden by EM(s): " + ", ".join(sorted(set(forbidden_by))))
+    if vetoed_by:
+        print("    * Veto EM(s): " + ", ".join(sorted(set(vetoed_by))))
 
 
 # ---------------------------------------------------------------------------
@@ -249,7 +316,7 @@ def print_option_results(
 
 
 def run_demo(profile_path: Path) -> None:
-    print("=== Triage Ethics Demo (DEMEProfileV03) ===\n")
+    print("=== Triage Ethics Demo (DEMEProfileV03 + GenevaBaseEM) ===\n")
 
     profile = load_profile(profile_path)
     triage_em, rights_em, gov_cfg = build_triage_ems_and_governance(profile)
@@ -257,39 +324,63 @@ def run_demo(profile_path: Path) -> None:
     facts_by_option = make_demo_facts()
     option_ids = list(facts_by_option.keys())
 
+    print(
+        f"Loaded profile: {profile.name} "
+        f"(stakeholder={profile.stakeholder_label}, tags={profile.tags})"
+    )
     print("Candidate options:")
     for oid in option_ids:
         print(f"  - {oid}")
 
-    from collections import defaultdict
+    # New: print a short scenario description for human/audit readers.
+    print_scenario_description()
+
+    # Instantiate EMs: base Geneva EM(s) plus domain + rights EMs.
+    ems = {
+        "case_study_1_triage": triage_em,
+        "rights_first_compliance": rights_em,
+    }
+
+    # Add base EMs from governance config, if present.
+    for base_id in getattr(gov_cfg, "base_em_ids", []):
+        em_cls = EM_REGISTRY.get(base_id)
+        if em_cls is None:
+            print(f"[warn] base_em_id '{base_id}' not found in EM_REGISTRY.")
+            continue
+        ems[base_id] = em_cls()
+
+    print("\nActive EMs in this demo:")
+    for name in ems.keys():
+        print(f"  - {name}")
 
     all_judgements: Dict[str, List[EthicalJudgement]] = defaultdict(list)
-    outcomes: Dict[str, DecisionOutcome] = {}
 
+    # Collect per-option judgements from all EMs.
     for oid, facts in facts_by_option.items():
-        j1 = triage_em.judge(facts)
-        j2 = rights_em.judge(facts)
-        all_judgements[oid].extend([j1, j2])
+        for em_name, em in ems.items():
+            j = em.judge(facts)
+            all_judgements[oid].append(j)
 
-        agg = aggregate_judgements(oid, all_judgements[oid], gov_cfg)
-        outcomes[oid] = agg
-        print_option_results(oid, all_judgements[oid], agg)
+    # Use the governance layer to aggregate and select an option.
+    decision: DecisionOutcome = select_option(all_judgements, gov_cfg)
 
-    selected = select_option(outcomes, gov_cfg)
-    forbidden = [oid for oid, d in outcomes.items() if d.verdict == "forbid"]
+    # Per-option aggregates for display.
+    for oid in option_ids:
+        per_option_j = all_judgements.get(oid, [])
+        agg_j = decision.aggregated_judgements.get(oid)
+        if agg_j is None:
+            continue
+        print_option_results(oid, per_option_j, agg_j)
 
     print("\n=== Governance Outcome ===")
-    if selected is None:
+    if decision.selected_option_id is None:
         print("No permissible option selected.")
     else:
-        print(f"Selected option: '{selected}'")
-    print(f"Ranked options: { [oid for oid in option_ids if oid not in forbidden] }")
-    print(f"Forbidden options: {forbidden}")
-    print(
-        "Rationale:"
-        f"\n  Selected option '{selected}' based on aggregated normative scores "
-        f"and GovernanceConfig. Forbidden options: {forbidden}."
-    )
+        print(f"Selected option: '{decision.selected_option_id}'")
+    print(f"Ranked options (eligible): {decision.ranked_options}")
+    print(f"Forbidden options: {decision.forbidden_options}")
+    print("Rationale:")
+    print(f"  {decision.rationale}")
 
 
 # ---------------------------------------------------------------------------
@@ -298,11 +389,11 @@ def run_demo(profile_path: Path) -> None:
 
 
 def main() -> None:
-    profile_path = Path("em_profile_v03.json")
+    profile_path = Path("deme_profile_v03.json")
     if not profile_path.exists():
         raise SystemExit(
-            "No em_profile_v03.json found in current directory.\n"
-            "Run 'ethical_dialogue_cli_v03.py' first to create one."
+            "No deme_profile_v03.json found in current directory.\n"
+            "Run 'scripts/ethical_dialogue_cli_v03.py' first to create one."
         )
 
     run_demo(profile_path)
