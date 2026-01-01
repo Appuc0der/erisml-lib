@@ -1,56 +1,21 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-[project]
-name = "erisml"
-version = "0.1.0"
-description = "ErisML: a modeling library for governed foundation-model agents in pervasive environments"
-readme = "README.md"
-requires-python = ">=3.10"
-authors = [
-  {name = "Your Name", email = "you@example.com"},
-]
-license = {text = "MIT"}
-dependencies = [
-  "lark>=1.1.7",
-  "pydantic>=2.0.0",
-  "pettingzoo>=1.24.0",
-  "gymnasium>=0.28.0",
-  "tarski>=0.7.1",
-  "prometheus-client>=0.16.0",
-  "structlog>=24.0.0",
-]
-
 [tool.pytest.ini_options]
-markers = [
-    "smoke: marks tests as smoke tests (quick sanity checks)",
-]
+addopts = "--cov=src/erisml --cov-report=term-missing --cov-report=html"
+testpaths = ["tests"]
 
-[project.optional-dependencies]
-dev = [
-  "pytest>=7.0.0",
-  "mypy>=1.0.0",
-  "black==24.4.2",
-  "isort>=5.0.0",
-  "ruff>=0.4.8",
-  "taplo>=0.9.0",
-]
-
-[tool.setuptools]
-package-dir = {"" = "src"}
-
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+check_untyped_defs = true
+# AGGRESSIVE EXCLUSION: This regex blocks the examples folder completely
+exclude = "(?x)(^src/erisml/examples/.*$)"
 
 [tool.black]
 line-length = 88
-target-version = ["py310"]
-required-version = "24.4.2"
-
-[tool.isort]
-profile = "black"
-
-[tool.ruff]
-line-length = 88
-
+target-version = ['py310']
+include = '\.pyi?$'
