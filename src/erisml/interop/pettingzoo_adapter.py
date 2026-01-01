@@ -22,7 +22,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from gymnasium import spaces
-from pettingzoo.utils import AECEnv  # type: ignore[import-untyped]
+from pettingzoo.utils import AECEnv  # type: ignore
 
 from erisml.core.engine import ErisEngine
 from erisml.core.model import ErisModel
@@ -49,10 +49,10 @@ class ErisPettingZooEnv(AECEnv):
         self._state: Dict[str, Any] = {}
         self._cumulative_rewards = {a: 0.0 for a in self.agents}
 
-        self.action_spaces: Dict[str, spaces.Space[Any]] = {
+        self.action_spaces: Dict[str, spaces.Space] = {
             a: spaces.Discrete(4) for a in self.agents
         }
-        self.observation_spaces: Dict[str, spaces.Space[Any]] = {
+        self.observation_spaces: Dict[str, spaces.Space] = {
             a: spaces.Dict({}) for a in self.agents
         }
 

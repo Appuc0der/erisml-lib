@@ -375,7 +375,7 @@ class GenevaBaselineEM(GenevaBaseEM):
             },
         )
 
-        reasons_list = cast(List[str], metadata["reasons"])
+        reasons_list: List[str] = list(metadata["reasons"])
         return EthicalJudgement(
             option_id=facts.option_id,
             em_name=self.em_name,
