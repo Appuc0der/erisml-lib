@@ -1,10 +1,91 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "erisml"
+dynamic = ["version"]
+description = "ErisML: a modeling library for governed foundation-model agents in pervasive environments"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  {name = "Andrew H. Bond", email = "agi.hpc@gmail.com"},
+]
+license = {text = "MIT"}
+keywords = ["ai", "ethics", "governance", "democratic", "ethics-modules", "mcp"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+  "lark>=1.1.7",
+  "pydantic>=2.0.0",
+  "pettingzoo>=1.24.0",
+  "gymnasium>=0.28.0",
+  "tarski>=0.7.1",
+  "prometheus-client>=0.16.0",
+  "structlog>=24.0.0",
+  "mcp>=0.9.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ahb-sjsu/erisml-lib"
+Repository = "https://github.com/ahb-sjsu/erisml-lib"
+Documentation = "https://github.com/ahb-sjsu/erisml-lib"
+Issues = "https://github.com/ahb-sjsu/erisml-lib/issues"
+Discord = "https://discord.gg/W3Bkj4AZ"
+
+[project.scripts]
+erisml-mcp-server = "erisml.ethics.interop.mcp_deme_server:main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0.0",
+  "mypy>=1.0.0",
+  "black==24.4.2",
+  "isort>=5.0.0",
+  "ruff>=0.4.8",
+  "taplo>=0.9.0",
+  "pytest-cov",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.dynamic]
+version = {attr = "erisml.__version__.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# --- UPDATED CONFIGURATION START ---
+
 [tool.pytest.ini_options]
+markers = [
+    "smoke: marks tests as smoke tests (quick sanity checks)",
+]
+# We added coverage flags here so 'Run pytest' reports %
 addopts = "--cov=src/erisml --cov-report=term-missing --cov-report=html"
 testpaths = ["tests"]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+required-version = "24.4.2"
+
+[tool.isort]
+profile = "black"
+
+[tool.ruff]
+line-length = 88
 
 [tool.mypy]
 python_version = "3.10"
@@ -12,10 +93,7 @@ warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
 check_untyped_defs = true
-# AGGRESSIVE EXCLUSION: This regex blocks the examples folder completely
+# Crucial: This prevents the server from checking the messy examples folder
 exclude = "(?x)(^src/erisml/examples/.*$)"
 
-[tool.black]
-line-length = 88
-target-version = ['py310']
-include = '\.pyi?$'
+# --- UPDATED CONFIGURATION END ---
