@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Mapping, Tuple, Optional
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 from erisml.ethics.facts import (
     EthicalFacts,
@@ -23,11 +23,14 @@ from erisml.ethics.modules.base import BaseEthicsModule
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class GenevaWeights:
     """
     Central configuration for Geneva scoring penalties.
+    Positive values here represent penalties (subtracted from score).
     """
+
     # Fairness
     exploits_vulnerable: float = 0.25
     power_imbalance: float = 0.15
@@ -48,7 +51,7 @@ class GenevaWeights:
 
     # Societal
     societal_risk_multiplier: float = 0.20
-    future_benefit_bonus_multiplier: float = 0.10
+    future_benefit_bonus_multiplier: float = 0.10  # This adds to score
 
     # Procedural
     bad_procedure: float = 0.15
@@ -59,23 +62,27 @@ class GenevaWeights:
     # Beneficence
     low_benefit_penalty: float = 0.05
 
-    # Epistemic
+    # Epistemic (Uncertainty)
     novelty_penalty: float = 0.15
     low_evidence_penalty: float = 0.15
     medium_evidence_penalty: float = 0.05
     uncertainty_multiplier: float = 0.20
+
 
 @dataclass
 class GenevaBaseEM(BaseEthicsModule):
     """
     Base class for DEME-style Ethics Modules with canonical verdict mapping.
     """
+
     em_name: str = "geneva_base"
     stakeholder: str = "unspecified"
+
     strongly_prefer_threshold: float = 0.8
     prefer_threshold: float = 0.6
     neutral_threshold: float = 0.4
     avoid_threshold: float = 0.2
+
     config: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -91,8 +98,16 @@ class GenevaBaseEM(BaseEthicsModule):
         )
         if not all(0.0 <= t <= 1.0 for t in thresholds):
             raise ValueError(f"Thresholds must be in [0.0, 1.0], got {thresholds}")
-        if not (self.strongly_prefer_threshold >= self.prefer_threshold >= self.neutral_threshold >= self.avoid_threshold):
-            raise ValueError("Thresholds must be monotonic.")
+
+        if not (
+            self.strongly_prefer_threshold
+            >= self.prefer_threshold
+            >= self.neutral_threshold
+            >= self.avoid_threshold
+        ):
+            raise ValueError(
+                "Thresholds must be monotonic: strongly >= prefer >= neutral >= avoid"
+            )
 
     @staticmethod
     def clamp_score(score: float) -> float:
@@ -100,10 +115,14 @@ class GenevaBaseEM(BaseEthicsModule):
 
     def score_to_verdict(self, score: float) -> str:
         score = self.clamp_score(score)
-        if score >= self.strongly_prefer_threshold: return "strongly_prefer"
-        if score >= self.prefer_threshold: return "prefer"
-        if score >= self.neutral_threshold: return "neutral"
-        if score >= self.avoid_threshold: return "avoid"
+        if score >= self.strongly_prefer_threshold:
+            return "strongly_prefer"
+        if score >= self.prefer_threshold:
+            return "prefer"
+        if score >= self.neutral_threshold:
+            return "neutral"
+        if score >= self.avoid_threshold:
+            return "avoid"
         return "forbid"
 
     def norm_bundle(
@@ -115,23 +134,36 @@ class GenevaBaseEM(BaseEthicsModule):
         clamped = self.clamp_score(score)
         verdict = self.score_to_verdict(clamped)
         reasons_list = list(reasons) if reasons is not None else []
-        metadata = {"score": clamped, "verdict": verdict, "reasons": reasons_list}
-        if extra_metadata: metadata.update(extra_metadata)
+
+        metadata = {
+            "score": clamped,
+            "verdict": verdict,
+            "reasons": reasons_list,
+        }
+        if extra_metadata:
+            metadata.update(extra_metadata)
+
         return clamped, verdict, metadata
+
 
 @dataclass
 class GenevaBaselineEM(GenevaBaseEM):
     """
     Baseline 'Geneva' ethics module.
+    Enforces cross-cutting constraints using configurable weights.
     """
+
     em_name: str = "geneva_baseline"
     stakeholder: str = "geneva_conventions"
     weights: GenevaWeights = field(default_factory=GenevaWeights)
 
     def judge(self, facts: EthicalFacts) -> EthicalJudgement:
+        # 1. Check Hard Vetoes
         veto_result = self._check_hard_vetoes(facts)
-        if veto_result: return veto_result
+        if veto_result:
+            return veto_result
 
+        # 2. Calculate Deductions
         score = 1.0
         reasons: List[str] = []
 
@@ -141,11 +173,15 @@ class GenevaBaselineEM(GenevaBaseEM):
         score = self._apply_societal(facts, score, reasons)
         score = self._apply_procedural(facts, score, reasons)
         score = self._apply_beneficence(facts, score, reasons)
+
+        # 3. Apply Epistemic Multiplier (Uncertainty)
         score, multiplier = self._apply_epistemic(facts, score, reasons)
 
+        # 4. Finalize
         final_score, verdict, metadata = self.norm_bundle(
             score, reasons=reasons, extra_metadata={"epistemic_multiplier": multiplier}
         )
+
         return EthicalJudgement(
             option_id=facts.option_id,
             em_name=self.em_name,
@@ -160,10 +196,15 @@ class GenevaBaselineEM(GenevaBaseEM):
         rd = facts.rights_and_duties
         jf = facts.justice_and_fairness
         reasons = []
-        if rd.violates_rights: reasons.append("• violates_rights = True")
-        if jf.discriminates_on_protected_attr: reasons.append("• discriminates_on_protected_attr = True")
+
+        if rd.violates_rights:
+            reasons.append("• violates_rights = True")
+        if jf.discriminates_on_protected_attr:
+            reasons.append("• discriminates_on_protected_attr = True")
+
         if reasons:
-            reasons.insert(0, "Option violates fundamental rights (Hard Veto).")
+            msg = "Option violates fundamental rights (Hard Veto)."
+            reasons.insert(0, msg)
             return EthicalJudgement(
                 option_id=facts.option_id,
                 em_name=self.em_name,
@@ -175,9 +216,12 @@ class GenevaBaselineEM(GenevaBaseEM):
             )
         return None
 
-    def _apply_fairness(self, facts: EthicalFacts, score: float, reasons: List[str]) -> float:
+    def _apply_fairness(
+        self, facts: EthicalFacts, score: float, reasons: List[str]
+    ) -> float:
         jf = facts.justice_and_fairness
         soc = facts.societal_and_environmental
+
         if jf.exploits_vulnerable_population:
             score -= self.weights.exploits_vulnerable
             reasons.append("Exploits vulnerable population.")
@@ -189,9 +233,13 @@ class GenevaBaselineEM(GenevaBaseEM):
             reasons.append("High burden on vulnerable groups.")
         return score
 
-    def _apply_autonomy(self, facts: EthicalFacts, score: float, reasons: List[str]) -> float:
+    def _apply_autonomy(
+        self, facts: EthicalFacts, score: float, reasons: List[str]
+    ) -> float:
         auto = facts.autonomy_and_agency
-        if not auto: return score
+        if not auto:
+            return score
+
         if not auto.has_meaningful_choice:
             score -= self.weights.lacks_choice
             reasons.append("Lacks meaningful choice.")
@@ -206,10 +254,15 @@ class GenevaBaselineEM(GenevaBaseEM):
             reasons.append("Manipulative design present.")
         return score
 
-    def _apply_privacy(self, facts: EthicalFacts, score: float, reasons: List[str]) -> float:
+    def _apply_privacy(
+        self, facts: EthicalFacts, score: float, reasons: List[str]
+    ) -> float:
         priv = facts.privacy_and_data
-        if not priv: return score
+        if not priv:
+            return score
+
         score -= self.weights.privacy_invasion_multiplier * priv.privacy_invasion_level
+
         if not priv.data_minimization_respected:
             score -= self.weights.no_data_minimization
             reasons.append("Data minimization violated.")
@@ -219,19 +272,31 @@ class GenevaBaselineEM(GenevaBaseEM):
         if priv.data_retention_excessive:
             score -= self.weights.excessive_retention
             reasons.append("Excessive data retention.")
+
         score -= self.weights.reid_risk_multiplier * priv.reidentification_risk
         return score
 
-    def _apply_societal(self, facts: EthicalFacts, score: float, reasons: List[str]) -> float:
+    def _apply_societal(
+        self, facts: EthicalFacts, score: float, reasons: List[str]
+    ) -> float:
         soc = facts.societal_and_environmental
-        if not soc: return score
+        if not soc:
+            return score
+
         score -= self.weights.societal_risk_multiplier * soc.long_term_societal_risk
-        score += self.weights.future_benefit_bonus_multiplier * soc.benefits_to_future_generations
+        score += (
+            self.weights.future_benefit_bonus_multiplier
+            * soc.benefits_to_future_generations
+        )
         return score
 
-    def _apply_procedural(self, facts: EthicalFacts, score: float, reasons: List[str]) -> float:
+    def _apply_procedural(
+        self, facts: EthicalFacts, score: float, reasons: List[str]
+    ) -> float:
         proc = facts.procedural_and_legitimacy
-        if not proc: return score
+        if not proc:
+            return score
+
         if not proc.followed_approved_procedure:
             score -= self.weights.bad_procedure
             reasons.append("Did not follow procedure.")
@@ -246,26 +311,37 @@ class GenevaBaselineEM(GenevaBaseEM):
             reasons.append("No contestation path.")
         return score
 
-    def _apply_beneficence(self, facts: EthicalFacts, score: float, reasons: List[str]) -> float:
+    def _apply_beneficence(
+        self, facts: EthicalFacts, score: float, reasons: List[str]
+    ) -> float:
         if facts.consequences.expected_benefit < 0.3:
             score -= self.weights.low_benefit_penalty
             reasons.append("Expected benefit is very low.")
         return score
 
-    def _apply_epistemic(self, facts: EthicalFacts, score: float, reasons: List[str]) -> Tuple[float, float]:
+    def _apply_epistemic(
+        self, facts: EthicalFacts, score: float, reasons: List[str]
+    ) -> Tuple[float, float]:
         epi = facts.epistemic_status
-        if not epi: return score, 1.0
+        if not epi:
+            return score, 1.0
+
         penalty = 0.0
         if epi.novel_situation_flag:
             penalty += self.weights.novelty_penalty
             reasons.append("Novel situation (cautious).")
+
         if epi.evidence_quality == "low":
             penalty += self.weights.low_evidence_penalty
             reasons.append("Low evidence quality.")
         elif epi.evidence_quality == "medium":
             penalty += self.weights.medium_evidence_penalty
+
         penalty += self.weights.uncertainty_multiplier * epi.uncertainty_level
+
         multiplier = max(0.5, 1.0 - penalty)
+
         if multiplier < 1.0:
             reasons.append(f"Epistemic multiplier: {multiplier:.2f}")
+
         return score * multiplier, multiplier
