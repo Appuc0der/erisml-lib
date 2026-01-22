@@ -38,6 +38,7 @@ class Consequences:
     probabilities: Dict[str, float] = field(default_factory=dict)
 
 
+# --- V3 Paired Ethics Classes ---
 @dataclass
 class JusticeAndFairness:
     affected_groups: Dict[str, Any] = field(default_factory=dict)
@@ -51,9 +52,11 @@ class RightsAndDuties:
 
 
 @dataclass
-class Virtues:
-    virtues_promoted: Dict[str, Any] = field(default_factory=dict)
-    vices_enabled: Dict[str, Any] = field(default_factory=dict)
+class VirtueAndCare:
+    """Specific class required by test_ethics_module_v3.py"""
+
+    virtues_promoted: List[str] = field(default_factory=list)
+    care_considerations: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -87,26 +90,24 @@ class FairnessAndBias:
 
 
 @dataclass
-class Accountability:
+class AccountabilityAndLiability:
     responsible_party: str = "user"
     audit_trail: bool = False
 
 
 @dataclass
-class Sustainability:
+class SustainabilityAndEnvironment:
     carbon_footprint: float = 0.0
     resource_usage: float = 0.0
 
 
 @dataclass
 class SocietalAndEnvironmental:
-    """Specific class required by test_ethics_module_v3.py"""
-
     societal_impact: str = "neutral"
     environmental_impact: str = "neutral"
-    long_term_consequences: List[str] = field(default_factory=list)
 
 
+# --- Main Facts Class ---
 @dataclass
 class EthicalFacts:
     option_id: str
@@ -119,7 +120,7 @@ class EthicalFacts:
     consequences: Consequences = field(default_factory=Consequences)
     justice: JusticeAndFairness = field(default_factory=JusticeAndFairness)
     rights: RightsAndDuties = field(default_factory=RightsAndDuties)
-    virtues: Virtues = field(default_factory=Virtues)
+    virtue_care: VirtueAndCare = field(default_factory=VirtueAndCare)
     autonomy: AutonomyAndAgency = field(default_factory=AutonomyAndAgency)
     privacy_gov: PrivacyAndDataGovernance = field(
         default_factory=PrivacyAndDataGovernance
@@ -129,8 +130,12 @@ class EthicalFacts:
     )
     safety: SafetyAndSecurity = field(default_factory=SafetyAndSecurity)
     fairness: FairnessAndBias = field(default_factory=FairnessAndBias)
-    accountability: Accountability = field(default_factory=Accountability)
-    sustainability: Sustainability = field(default_factory=Sustainability)
+    accountability: AccountabilityAndLiability = field(
+        default_factory=AccountabilityAndLiability
+    )
+    sustainability: SustainabilityAndEnvironment = field(
+        default_factory=SustainabilityAndEnvironment
+    )
     societal_env: SocietalAndEnvironmental = field(
         default_factory=SocietalAndEnvironmental
     )

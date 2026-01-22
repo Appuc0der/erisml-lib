@@ -12,14 +12,14 @@ try:
         Consequences,
         JusticeAndFairness,
         RightsAndDuties,
-        Virtues,
+        VirtueAndCare,
         AutonomyAndAgency,
         PrivacyAndDataGovernance,
         TransparencyAndExplainability,
         SafetyAndSecurity,
         FairnessAndBias,
-        Accountability,
-        Sustainability,
+        AccountabilityAndLiability,
+        SustainabilityAndEnvironment,
         SocietalAndEnvironmental,
         EthicsModule,
         BaseEthicsModule,
@@ -34,11 +34,11 @@ try:
 except ImportError:
     DEME = MoralTensor = EthicalFacts = EpistemicStatus = Stakeholder = None
     Timeframe = Context = Consequences = JusticeAndFairness = RightsAndDuties = None
-    Virtues = AutonomyAndAgency = PrivacyAndDataGovernance = None
+    VirtueAndCare = AutonomyAndAgency = PrivacyAndDataGovernance = None
     TransparencyAndExplainability = SafetyAndSecurity = FairnessAndBias = None
-    Accountability = Sustainability = SocietalAndEnvironmental = None
-    EthicsModule = BaseEthicsModule = EthicalJudgement = None
-    StrategicLayer = NashResult = CooperativeLayer = None
+    AccountabilityAndLiability = SustainabilityAndEnvironment = None
+    SocietalAndEnvironmental = EthicsModule = BaseEthicsModule = None
+    EthicalJudgement = StrategicLayer = NashResult = CooperativeLayer = None
     GovernanceConfig = aggregate_judgements = select_option = None
 
 __all__ = [
@@ -52,14 +52,14 @@ __all__ = [
     "Consequences",
     "JusticeAndFairness",
     "RightsAndDuties",
-    "Virtues",
+    "VirtueAndCare",
     "AutonomyAndAgency",
     "PrivacyAndDataGovernance",
     "TransparencyAndExplainability",
     "SafetyAndSecurity",
     "FairnessAndBias",
-    "Accountability",
-    "Sustainability",
+    "AccountabilityAndLiability",
+    "SustainabilityAndEnvironment",
     "SocietalAndEnvironmental",
     "EthicsModule",
     "BaseEthicsModule",
