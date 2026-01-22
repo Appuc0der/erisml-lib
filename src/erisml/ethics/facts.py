@@ -1,5 +1,5 @@
 """
-EthicalFacts: Complete V3 aligned schema for erisml-lib.
+EthicalFacts: Final V3-aligned schema for erisml-lib.
 """
 
 from dataclasses import dataclass, field
@@ -79,6 +79,7 @@ class AutonomyAndAgency:
     has_meaningful_choice: bool = True
     supports_self_determination: bool = True
     manipulative_intent_detected: bool = False
+    coercion_or_undue_influence: bool = False
     freedom_metrics: Dict[str, float] = field(default_factory=dict)
     informed_consent: bool = False
 
