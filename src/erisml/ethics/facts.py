@@ -6,18 +6,15 @@ from dataclasses import dataclass, field
 from typing import Dict, Any, List, Optional  # noqa: F401
 
 
+# --- Standard Classes ---
 @dataclass
 class EpistemicStatus:
-    """Represents certainty and knowledge state."""
-
     uncertainty_level: float = 0.0
     knowledge_gaps: List[str] = field(default_factory=list)
 
 
 @dataclass
 class Stakeholder:
-    """Represents an entity affected by the decision."""
-
     id: str
     role: str
     impact_weight: float = 1.0
@@ -25,16 +22,12 @@ class Stakeholder:
 
 @dataclass
 class Timeframe:
-    """Represents temporal scope."""
-
     duration: str = "immediate"
     urgency: float = 1.0
 
 
 @dataclass
 class Context:
-    """Represents situational context."""
-
     domain: str = "general"
     constraints: Dict[str, Any] = field(default_factory=dict)
 
@@ -82,6 +75,40 @@ class Sustainability:
     resource_usage: float = 0.0
 
 
+# --- V3 Test Suite Specific Aliases/Classes ---
+@dataclass
+class PrivacyAndDataGovernance:
+    """Specific class required by test_ethics_module_v3.py"""
+
+    data_usage: str = "consensual"
+    retention_policy: str = "standard"
+
+
+@dataclass
+class TransparencyAndExplainability:
+    explainability_score: float = 0.0
+    transparency_level: str = "medium"
+
+
+@dataclass
+class SafetyAndSecurity:
+    safety_protocols: List[str] = field(default_factory=list)
+    risk_level: str = "low"
+
+
+@dataclass
+class FairnessAndBias:
+    bias_metrics: Dict[str, float] = field(default_factory=dict)
+    protected_groups: List[str] = field(default_factory=list)
+
+
+@dataclass
+class Accountability:
+    responsible_party: str = "user"
+    audit_trail: bool = False
+
+
+# --- Main Facts Class ---
 @dataclass
 class EthicalFacts:
     option_id: str
@@ -100,3 +127,13 @@ class EthicalFacts:
         default_factory=PrivacyAndConfidentiality
     )
     sustainability: Sustainability = field(default_factory=Sustainability)
+    # V3 Fields
+    privacy_gov: PrivacyAndDataGovernance = field(
+        default_factory=PrivacyAndDataGovernance
+    )
+    transparency: TransparencyAndExplainability = field(
+        default_factory=TransparencyAndExplainability
+    )
+    safety: SafetyAndSecurity = field(default_factory=SafetyAndSecurity)
+    fairness: FairnessAndBias = field(default_factory=FairnessAndBias)
+    accountability: Accountability = field(default_factory=Accountability)

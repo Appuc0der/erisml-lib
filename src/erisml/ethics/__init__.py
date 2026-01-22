@@ -13,6 +13,11 @@ from .facts import (  # noqa: F401
     AutonomyAndAgency,
     PrivacyAndConfidentiality,
     Sustainability,
+    PrivacyAndDataGovernance,
+    TransparencyAndExplainability,
+    SafetyAndSecurity,
+    FairnessAndBias,
+    Accountability,
 )
 from .base import EthicsModule, BaseEthicsModule, EthicalJudgement  # noqa: F401
 from .strategic import StrategicLayer, NashResult  # noqa: F401
@@ -38,6 +43,11 @@ __all__ = [
     "AutonomyAndAgency",
     "PrivacyAndConfidentiality",
     "Sustainability",
+    "PrivacyAndDataGovernance",
+    "TransparencyAndExplainability",
+    "SafetyAndSecurity",
+    "FairnessAndBias",
+    "Accountability",
     "EthicsModule",
     "BaseEthicsModule",
     "EthicalJudgement",

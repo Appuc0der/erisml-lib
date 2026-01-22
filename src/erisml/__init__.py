@@ -16,6 +16,11 @@ try:
         AutonomyAndAgency,
         PrivacyAndConfidentiality,
         Sustainability,
+        PrivacyAndDataGovernance,
+        TransparencyAndExplainability,
+        SafetyAndSecurity,
+        FairnessAndBias,
+        Accountability,
         EthicsModule,
         BaseEthicsModule,
         EthicalJudgement,
@@ -42,6 +47,11 @@ except ImportError:
     AutonomyAndAgency = None
     PrivacyAndConfidentiality = None
     Sustainability = None
+    PrivacyAndDataGovernance = None
+    TransparencyAndExplainability = None
+    SafetyAndSecurity = None
+    FairnessAndBias = None
+    Accountability = None
     EthicsModule = None
     BaseEthicsModule = None
     EthicalJudgement = None
@@ -67,6 +77,11 @@ __all__ = [
     "AutonomyAndAgency",
     "PrivacyAndConfidentiality",
     "Sustainability",
+    "PrivacyAndDataGovernance",
+    "TransparencyAndExplainability",
+    "SafetyAndSecurity",
+    "FairnessAndBias",
+    "Accountability",
     "EthicsModule",
     "BaseEthicsModule",
     "EthicalJudgement",
