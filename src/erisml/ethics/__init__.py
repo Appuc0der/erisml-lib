@@ -17,6 +17,7 @@ from .facts import (  # noqa: F401
     FairnessAndBias,
     Accountability,
     Sustainability,
+    SocietalAndEnvironmental,
 )
 from .base import EthicsModule, BaseEthicsModule, EthicalJudgement  # noqa: F401
 from .strategic import StrategicLayer, NashResult  # noqa: F401
@@ -46,6 +47,7 @@ __all__ = [
     "FairnessAndBias",
     "Accountability",
     "Sustainability",
+    "SocietalAndEnvironmental",
     "EthicsModule",
     "BaseEthicsModule",
     "EthicalJudgement",

@@ -20,6 +20,7 @@ try:
         FairnessAndBias,
         Accountability,
         Sustainability,
+        SocietalAndEnvironmental,
         EthicsModule,
         BaseEthicsModule,
         EthicalJudgement,
@@ -35,8 +36,9 @@ except ImportError:
     Timeframe = Context = Consequences = JusticeAndFairness = RightsAndDuties = None
     Virtues = AutonomyAndAgency = PrivacyAndDataGovernance = None
     TransparencyAndExplainability = SafetyAndSecurity = FairnessAndBias = None
-    Accountability = Sustainability = EthicsModule = BaseEthicsModule = None
-    EthicalJudgement = StrategicLayer = NashResult = CooperativeLayer = None
+    Accountability = Sustainability = SocietalAndEnvironmental = None
+    EthicsModule = BaseEthicsModule = EthicalJudgement = None
+    StrategicLayer = NashResult = CooperativeLayer = None
     GovernanceConfig = aggregate_judgements = select_option = None
 
 __all__ = [
@@ -58,6 +60,7 @@ __all__ = [
     "FairnessAndBias",
     "Accountability",
     "Sustainability",
+    "SocietalAndEnvironmental",
     "EthicsModule",
     "BaseEthicsModule",
     "EthicalJudgement",

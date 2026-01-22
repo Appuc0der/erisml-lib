@@ -99,6 +99,15 @@ class Sustainability:
 
 
 @dataclass
+class SocietalAndEnvironmental:
+    """Specific class required by test_ethics_module_v3.py"""
+
+    societal_impact: str = "neutral"
+    environmental_impact: str = "neutral"
+    long_term_consequences: List[str] = field(default_factory=list)
+
+
+@dataclass
 class EthicalFacts:
     option_id: str
     scenario_id: str
@@ -122,3 +131,6 @@ class EthicalFacts:
     fairness: FairnessAndBias = field(default_factory=FairnessAndBias)
     accountability: Accountability = field(default_factory=Accountability)
     sustainability: Sustainability = field(default_factory=Sustainability)
+    societal_env: SocietalAndEnvironmental = field(
+        default_factory=SocietalAndEnvironmental
+    )
