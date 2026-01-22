@@ -4,43 +4,32 @@ try:
     from erisml.ethics import (
         DEME,
         MoralTensor,
-        Consequences,
         EthicalFacts,
+        Consequences,
         JusticeAndFairness,
         RightsAndDuties,
+        Virtues,
         AutonomyAndAgency,
-        EpistemicStatus,
         EthicsModule,
         BaseEthicsModule,
         EthicalJudgement,
         StrategicLayer,
         NashResult,
         CooperativeLayer,
-    
         GovernanceConfig,
         aggregate_judgements,
         select_option,
     )  # noqa: F401
-
 except ImportError:
+    # Fallback for setup.py
     DEME = None
     MoralTensor = None
-    # Auto-generated fallbacks
-    for name in [
-        "Consequences",
-        "EthicalFacts",
-        "JusticeAndFairness",
-        "RightsAndDuties",
-        "AutonomyAndAgency",
-        "EpistemicStatus",
-        "GovernanceConfig",
-    "aggregate_judgements",
-    "select_option",
-]:
-        vars()[name    "GovernanceConfig",
-    "aggregate_judgements",
-    "select_option",
-] = None
+    EthicalFacts = None
+    Consequences = None
+    JusticeAndFairness = None
+    RightsAndDuties = None
+    Virtues = None
+    AutonomyAndAgency = None
     EthicsModule = None
     BaseEthicsModule = None
     EthicalJudgement = None
@@ -51,16 +40,15 @@ except ImportError:
     aggregate_judgements = None
     select_option = None
 
-
 __all__ = [
     "DEME",
     "MoralTensor",
-    "Consequences",
     "EthicalFacts",
+    "Consequences",
     "JusticeAndFairness",
     "RightsAndDuties",
+    "Virtues",
     "AutonomyAndAgency",
-    "EpistemicStatus",
     "EthicsModule",
     "BaseEthicsModule",
     "EthicalJudgement",
