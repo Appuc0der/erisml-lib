@@ -1,9 +1,9 @@
 """
-EthicalFacts: Core data structures for ethical reasoning.
+EthicalFacts: Complete schema for erisml-lib test suites.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional  # noqa: F401
+from typing import Dict, Any, List, Optional
 
 
 @dataclass
@@ -33,20 +33,32 @@ class Context:
 
 @dataclass
 class Consequences:
+    expected_benefit: float = 0.0
+    expected_harm: float = 0.0
+    urgency: float = 0.0
+    affected_count: int = 0
     short_term: Dict[str, Any] = field(default_factory=dict)
     long_term: Dict[str, Any] = field(default_factory=dict)
     probabilities: Dict[str, float] = field(default_factory=dict)
 
 
-# --- V3 Paired Ethics Classes ---
 @dataclass
 class JusticeAndFairness:
+    discriminates_on_protected_attr: bool = False
+    prioritizes_most_disadvantaged: bool = False
+    distributive_pattern: Optional[str] = None
+    exploits_vulnerable_population: bool = False
+    exacerbates_power_imbalance: bool = False
     affected_groups: Dict[str, Any] = field(default_factory=dict)
     equity_metrics: Dict[str, float] = field(default_factory=dict)
 
 
 @dataclass
 class RightsAndDuties:
+    violates_rights: bool = False
+    has_valid_consent: bool = True
+    violates_explicit_rule: bool = False
+    role_duty_conflict: bool = False
     rights_infringed: Dict[str, Any] = field(default_factory=dict)
     duties_upheld: Dict[str, Any] = field(default_factory=dict)
 
@@ -107,42 +119,26 @@ class SocietalAndEnvironmental:
 
 @dataclass
 class ProceduralAndLegitimacy:
-    """Specific class required by test_ethics_module_v3.py"""
-
     process_integrity: str = "high"
     institutional_legitimacy: str = "standard"
 
 
-# --- Main Facts Class ---
 @dataclass
 class EthicalFacts:
     option_id: str
-    scenario_id: str
+    scenario_id: str = "default"
     metadata: Dict[str, Any] = field(default_factory=dict)
-    epistemic_status: EpistemicStatus = field(default_factory=EpistemicStatus)
+    epistemic_status: Optional[EpistemicStatus] = None
     stakeholders: List[Stakeholder] = field(default_factory=list)
-    timeframe: Timeframe = field(default_factory=Timeframe)
-    context: Context = field(default_factory=Context)
-    consequences: Consequences = field(default_factory=Consequences)
-    justice: JusticeAndFairness = field(default_factory=JusticeAndFairness)
-    rights: RightsAndDuties = field(default_factory=RightsAndDuties)
-    virtue_care: VirtueAndCare = field(default_factory=VirtueAndCare)
-    autonomy: AutonomyAndAgency = field(default_factory=AutonomyAndAgency)
-    privacy_gov: PrivacyAndDataGovernance = field(
-        default_factory=PrivacyAndDataGovernance
-    )
-    transparency: TransparencyAndExplainability = field(
-        default_factory=TransparencyAndExplainability
-    )
-    safety: SafetyAndSecurity = field(default_factory=SafetyAndSecurity)
-    fairness: FairnessAndBias = field(default_factory=FairnessAndBias)
-    accountability: AccountabilityAndLiability = field(
-        default_factory=AccountabilityAndLiability
-    )
-    sustainability: SustainabilityAndEnvironment = field(
-        default_factory=SustainabilityAndEnvironment
-    )
-    societal_env: SocietalAndEnvironmental = field(
-        default_factory=SocietalAndEnvironmental
-    )
-    procedural: ProceduralAndLegitimacy = field(default_factory=ProceduralAndLegitimacy)
+    timeframe: Optional[Timeframe] = None
+    context: Optional[Context] = None
+    consequences: Optional[Consequences] = None
+    justice_and_fairness: Optional[JusticeAndFairness] = None
+    rights_and_duties: Optional[RightsAndDuties] = None
+    virtue_and_care: Optional[VirtueAndCare] = None
+    autonomy_and_agency: Optional[AutonomyAndAgency] = None
+    privacy_and_data: Optional[PrivacyAndDataGovernance] = None
+    societal_and_environmental: Optional[SocietalAndEnvironmental] = None
+    procedural_and_legitimacy: Optional[ProceduralAndLegitimacy] = None
+    tags: List[str] = field(default_factory=list)
+    extra: Dict[str, Any] = field(default_factory=dict)
