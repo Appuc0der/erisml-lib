@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 from typing import Dict, Any, List, Optional  # noqa: F401
 
 
-# --- Standard Classes ---
 @dataclass
 class EpistemicStatus:
     uncertainty_level: float = 0.0
@@ -64,22 +63,7 @@ class AutonomyAndAgency:
 
 
 @dataclass
-class PrivacyAndConfidentiality:
-    data_sensitivity: str = "LOW"
-    encryption_standard: str = "AES-256"
-
-
-@dataclass
-class Sustainability:
-    carbon_footprint: float = 0.0
-    resource_usage: float = 0.0
-
-
-# --- V3 Test Suite Specific Aliases/Classes ---
-@dataclass
 class PrivacyAndDataGovernance:
-    """Specific class required by test_ethics_module_v3.py"""
-
     data_usage: str = "consensual"
     retention_policy: str = "standard"
 
@@ -108,7 +92,12 @@ class Accountability:
     audit_trail: bool = False
 
 
-# --- Main Facts Class ---
+@dataclass
+class Sustainability:
+    carbon_footprint: float = 0.0
+    resource_usage: float = 0.0
+
+
 @dataclass
 class EthicalFacts:
     option_id: str
@@ -123,11 +112,6 @@ class EthicalFacts:
     rights: RightsAndDuties = field(default_factory=RightsAndDuties)
     virtues: Virtues = field(default_factory=Virtues)
     autonomy: AutonomyAndAgency = field(default_factory=AutonomyAndAgency)
-    privacy: PrivacyAndConfidentiality = field(
-        default_factory=PrivacyAndConfidentiality
-    )
-    sustainability: Sustainability = field(default_factory=Sustainability)
-    # V3 Fields
     privacy_gov: PrivacyAndDataGovernance = field(
         default_factory=PrivacyAndDataGovernance
     )
@@ -137,3 +121,4 @@ class EthicalFacts:
     safety: SafetyAndSecurity = field(default_factory=SafetyAndSecurity)
     fairness: FairnessAndBias = field(default_factory=FairnessAndBias)
     accountability: Accountability = field(default_factory=Accountability)
+    sustainability: Sustainability = field(default_factory=Sustainability)

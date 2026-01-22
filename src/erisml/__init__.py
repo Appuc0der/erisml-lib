@@ -14,13 +14,12 @@ try:
         RightsAndDuties,
         Virtues,
         AutonomyAndAgency,
-        PrivacyAndConfidentiality,
-        Sustainability,
         PrivacyAndDataGovernance,
         TransparencyAndExplainability,
         SafetyAndSecurity,
         FairnessAndBias,
         Accountability,
+        Sustainability,
         EthicsModule,
         BaseEthicsModule,
         EthicalJudgement,
@@ -32,35 +31,13 @@ try:
         select_option,
     )  # noqa: F401
 except ImportError:
-    # Nuclear Fallback
-    DEME = None
-    MoralTensor = None
-    EthicalFacts = None
-    EpistemicStatus = None
-    Stakeholder = None
-    Timeframe = None
-    Context = None
-    Consequences = None
-    JusticeAndFairness = None
-    RightsAndDuties = None
-    Virtues = None
-    AutonomyAndAgency = None
-    PrivacyAndConfidentiality = None
-    Sustainability = None
-    PrivacyAndDataGovernance = None
-    TransparencyAndExplainability = None
-    SafetyAndSecurity = None
-    FairnessAndBias = None
-    Accountability = None
-    EthicsModule = None
-    BaseEthicsModule = None
-    EthicalJudgement = None
-    StrategicLayer = None
-    NashResult = None
-    CooperativeLayer = None
-    GovernanceConfig = None
-    aggregate_judgements = None
-    select_option = None
+    DEME = MoralTensor = EthicalFacts = EpistemicStatus = Stakeholder = None
+    Timeframe = Context = Consequences = JusticeAndFairness = RightsAndDuties = None
+    Virtues = AutonomyAndAgency = PrivacyAndDataGovernance = None
+    TransparencyAndExplainability = SafetyAndSecurity = FairnessAndBias = None
+    Accountability = Sustainability = EthicsModule = BaseEthicsModule = None
+    EthicalJudgement = StrategicLayer = NashResult = CooperativeLayer = None
+    GovernanceConfig = aggregate_judgements = select_option = None
 
 __all__ = [
     "DEME",
@@ -75,13 +52,12 @@ __all__ = [
     "RightsAndDuties",
     "Virtues",
     "AutonomyAndAgency",
-    "PrivacyAndConfidentiality",
-    "Sustainability",
     "PrivacyAndDataGovernance",
     "TransparencyAndExplainability",
     "SafetyAndSecurity",
     "FairnessAndBias",
     "Accountability",
+    "Sustainability",
     "EthicsModule",
     "BaseEthicsModule",
     "EthicalJudgement",
