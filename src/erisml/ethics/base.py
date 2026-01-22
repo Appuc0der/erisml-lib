@@ -4,7 +4,7 @@ Base classes and interfaces for Ethics Modules.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from .facts import EthicalFacts
 
 
